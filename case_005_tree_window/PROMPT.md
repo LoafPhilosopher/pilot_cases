@@ -1,4 +1,4 @@
-# Exact generation prompt
+# Recorded generation prompt
 
 The following prompt is supplied to one isolated Coding Agent. Network and Web
 interfaces must not be used. The Agent must also make no tool, filesystem, or

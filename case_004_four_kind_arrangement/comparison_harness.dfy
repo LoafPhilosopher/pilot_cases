@@ -1,4 +1,4 @@
-include "../../DafnyBench/DafnyBench/dataset/ground_truth/formal_verication_dafny_tmp_tmpwgl2qz28_Challenges_ex7.dfy"
+include "../third_party/DafnyBench/DafnyBench/dataset/ground_truth/formal_verication_dafny_tmp_tmpwgl2qz28_Challenges_ex7.dfy"
 include "generated_attempt_01.dfy"
 
 // The generated specification's AllowedPair predicate is exactly the

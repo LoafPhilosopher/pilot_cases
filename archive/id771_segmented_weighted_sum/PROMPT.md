@@ -1,4 +1,4 @@
-# Exact generation prompt
+# Recorded generation prompt
 
 The following prompt was given to one isolated Coding Agent. It was instructed
 not to use Web, tools, the filesystem, or a hidden reference; the generation

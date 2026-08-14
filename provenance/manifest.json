@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "scope": "five-case preliminary feasibility pilot",
+  "benchmark": {
+    "name": "DafnyBench",
+    "repository": "https://github.com/sun-wendy/DafnyBench.git",
+    "commit": "0cd28feed9cd0179b07fdb9d002f8c39063658e4"
+  },
+  "verifier": {
+    "name": "Dafny",
+    "version": "4.3.0"
+  },
+  "generation": {
+    "provider": "OpenAI",
+    "client": "Codex CLI",
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "ultra",
+    "samples_per_active_task": 1,
+    "temperature": null,
+    "top_p": null,
+    "seed": null,
+    "unrecorded_sampling_note": "Temperature, top_p, and seed were not exposed in the retained Codex logs and are not inferred.",
+    "response_boundary": "first assistant final-answer event in the isolated generation turn"
+  },
+  "audit": {
+    "structured_logs_public": false,
+    "retention": "Complete JSONL logs are retained locally.",
+    "privacy_reason": "The logs also contain platform instructions, encrypted reasoning, absolute local paths, and later analysis turns.",
+    "prompt_artifact_caveat": "The inter-agent task payload is encrypted in the retained log. PROMPT.md is the recorded prompt artifact, but its equality to that encrypted envelope is not independently verifiable from this repository.",
+    "prompt_heading_note": "On 2026-08-14, each repository-only title was changed from 'Exact generation prompt' to 'Recorded generation prompt'; the instruction and Dafny source beneath the title were unchanged. Prompt hashes describe the current files.",
+    "zero_call_claim": "For every active case, the retained log contains zero Web-search, function, custom-tool, filesystem, or outbound-agent calls before the first code response.",
+    "capability_caveat": "Tools existed in the generation environment. The evidence concerns actual pre-response use, not capability-level disabling.",
+    "independent_audit_caveat": "Hashes anchor retained logs but cannot independently prove their unpublished contents.",
+    "session_reuse_note": "The sessions for cases 003 and 004 contain tool calls in later follow-up analysis turns; their pre-first-response counts remain zero."
+  },
+  "cases": [
+    {
+      "case": "001",
+      "dafnybench_id": "004",
+      "reference_path": "DafnyBench/dataset/ground_truth/AssertivePrograming_tmp_tmpwf43uz0e_Find_Substring.dfy",
+      "session_id": "019fd6f4-9779-7ae1-a913-9ee29c60a414",
+      "session_timestamp_utc": "2026-08-06T12:03:01.625Z",
+      "codex_cli_version": "0.146.1",
+      "calls_before_first_response": {
+        "web_search": 0,
+        "function": 0,
+        "custom_tool": 0,
+        "outbound_agent": 0
+      },
+      "prompt": {
+        "path": "case_001_substring_occurrence/PROMPT.md",
+        "bytes": 1417,
+        "sha256": "1ed45cc1e309a532fac0ef225811a71e97f9def464d91a28b30c64b474ba336a"
+      },
+      "masked_input": {
+        "path": "case_001_substring_occurrence/input_masked.dfy",
+        "bytes": 539,
+        "sha256": "d596f89565662403777cc01312fe3b2de89734cdabf7ce1d0419a11b3c3d581d"
+      },
+      "raw_response": {
+        "bytes": 1889,
+        "sha256": "2b1a718fd35f0c2a5062ec6a0b7e3956d7ba391ece6a86557252e23a91b0d77b"
+      },
+      "saved_artifact": {
+        "path": "case_001_substring_occurrence/generated_attempt_01.dfy",
+        "bytes": 1890,
+        "sha256": "178b4c48f5c0f2d78988a898d73e430ad1de954181b7b2c6f68966910a30b460",
+        "normalization": "append_single_trailing_lf"
+      },
+      "retained_structured_log": {
+        "bytes": 90902,
+        "lines": 23,
+        "sha256": "d0c5d65ce03cd90f1b0d6ceac1d031134f7a3337aed2c49911ec64b12ce45b3e"
+      }
+    },
+    {
+      "case": "002",
+      "dafnybench_id": "117",
+      "reference_path": "DafnyBench/dataset/ground_truth/DafnyPrograms_tmp_tmp74_f9k_c_automaton.dfy",
+      "session_id": "019ff9f4-e032-7ba2-8672-c73b01dfea19",
+      "session_timestamp_utc": "2026-08-13T07:10:02.807Z",
+      "codex_cli_version": "0.147.0",
+      "calls_before_first_response": {
+        "web_search": 0,
+        "function": 0,
+        "custom_tool": 0,
+        "outbound_agent": 0
+      },
+      "prompt": {
+        "path": "case_002_local_transition_trace/PROMPT.md",
+        "bytes": 1796,
+        "sha256": "bffe50df742ce4462cd20045086cb12d1960e4fee609bd7300543ebc8faf92cf"
+      },
+      "masked_input": {
+        "path": "case_002_local_transition_trace/input_masked.dfy",
+        "bytes": 764,
+        "sha256": "769f0e12e6ae7abfcb7c6a500c51b6dc29477909f51ac14867fa877068b6f997"
+      },
+      "raw_response": {
+        "bytes": 6221,
+        "sha256": "67df4f97e8a3ac88d9e3a9347b0816dd0ca5c70f14bd4274ad7d5e5fcdc321a2"
+      },
+      "saved_artifact": {
+        "path": "case_002_local_transition_trace/generated_attempt_01.dfy",
+        "bytes": 6222,
+        "sha256": "4baf2082509f62d27a36989e37181c1c8aaf5aab5b98d2c2d9314a694d8f9e3f",
+        "normalization": "append_single_trailing_lf"
+      },
+      "retained_structured_log": {
+        "bytes": 132102,
+        "lines": 28,
+        "sha256": "d7cbd4e13b19566dcf7ae10a19ebb846c54f788897f470535c37fefa483ae675"
+      }
+    },
+    {
+      "case": "003",
+      "dafnybench_id": "311",
+      "reference_path": "DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny2_COST-verif-comp-2011-3-TwoDuplicates.dfy",
+      "session_id": "019ff9f5-01e9-75b0-837b-b77a044abdea",
+      "session_timestamp_utc": "2026-08-13T07:10:11.436Z",
+      "codex_cli_version": "0.147.0",
+      "calls_before_first_response": {
+        "web_search": 0,
+        "function": 0,
+        "custom_tool": 0,
+        "outbound_agent": 0
+      },
+      "prompt": {
+        "path": "case_003_repeated_value_pair/PROMPT.md",
+        "bytes": 1747,
+        "sha256": "03c3b8dd6407f8a7baaba36f0e70397d28271bf3dd293cc0857583e376492fc8"
+      },
+      "masked_input": {
+        "path": "case_003_repeated_value_pair/input_masked.dfy",
+        "bytes": 715,
+        "sha256": "9c382d076bd401138b5505a4195ad9bb9d9d7991539a11b8d937400fde0c071d"
+      },
+      "raw_response": {
+        "bytes": 9091,
+        "sha256": "23621740184f451986012420028ec1773d387baf454678601cf44f875b6dcdc1"
+      },
+      "saved_artifact": {
+        "path": "case_003_repeated_value_pair/generated_attempt_01.dfy",
+        "bytes": 9092,
+        "sha256": "bcd4bd6bbc08d5fbbcf45f3b951e385aa5b9d5fbaa432a0a037f5d10126dd32f",
+        "normalization": "append_single_trailing_lf"
+      },
+      "retained_structured_log": {
+        "bytes": 778988,
+        "lines": 291,
+        "sha256": "e89d037c7ace99e9b98463801c384c6548241bf78018338f2a2cf038a88659a5"
+      }
+    },
+    {
+      "case": "004",
+      "dafnybench_id": "690",
+      "reference_path": "DafnyBench/dataset/ground_truth/formal_verication_dafny_tmp_tmpwgl2qz28_Challenges_ex7.dfy",
+      "session_id": "019ff9f5-222b-7391-bc89-dc805f79eadc",
+      "session_timestamp_utc": "2026-08-13T07:10:19.694Z",
+      "codex_cli_version": "0.147.0",
+      "calls_before_first_response": {
+        "web_search": 0,
+        "function": 0,
+        "custom_tool": 0,
+        "outbound_agent": 0
+      },
+      "prompt": {
+        "path": "case_004_four_kind_arrangement/PROMPT.md",
+        "bytes": 1628,
+        "sha256": "83a7806e7cbe24635e9eba1bd3093ad87d590e26d6380a67ae8390fa80e074be"
+      },
+      "masked_input": {
+        "path": "case_004_four_kind_arrangement/input_masked.dfy",
+        "bytes": 596,
+        "sha256": "06745cb71c139b27992e7b65193a3e2368e9c7418cacf9ff1c57cdabf7971c7f"
+      },
+      "raw_response": {
+        "bytes": 8533,
+        "sha256": "a8b257cd04773b0a0a9f89452df19f0035820842e86290aa5aee72c9216556e1"
+      },
+      "saved_artifact": {
+        "path": "case_004_four_kind_arrangement/generated_attempt_01.dfy",
+        "bytes": 8534,
+        "sha256": "25322392910d7ddb1c55f444b4c48933b27b0546ce19f99b615517e1e5fb631d",
+        "normalization": "append_single_trailing_lf"
+      },
+      "retained_structured_log": {
+        "bytes": 745977,
+        "lines": 227,
+        "sha256": "724498ffff2163acdb6907137834ab072432696a1ef6430e7656c7946d515b67"
+      }
+    },
+    {
+      "case": "005",
+      "dafnybench_id": "491",
+      "reference_path": "DafnyBench/dataset/ground_truth/dafny-rope_tmp_tmpl4v_njmy_Rope.dfy",
+      "session_id": "019ffa46-7ece-7692-8c3a-3cc32eb472f2",
+      "session_timestamp_utc": "2026-08-13T08:39:11.825Z",
+      "codex_cli_version": "0.147.0",
+      "calls_before_first_response": {
+        "web_search": 0,
+        "function": 0,
+        "custom_tool": 0,
+        "outbound_agent": 0
+      },
+      "prompt": {
+        "path": "case_005_tree_window/PROMPT.md",
+        "bytes": 2971,
+        "sha256": "810e6322f462876b54b57a1df811ac9e3883685eb0658c3d4706f39408632e31"
+      },
+      "masked_input": {
+        "path": "case_005_tree_window/input_masked.dfy",
+        "bytes": 1797,
+        "sha256": "6553e4c95e23cfe09938aee7e702bb5cfb5a9e4a7b30ccf87ebc5d23b897b052"
+      },
+      "raw_response": {
+        "bytes": 4469,
+        "sha256": "cac95f72438368e0854f2da180423c0f68486b92f94c5793d1d40101416db689"
+      },
+      "saved_artifact": {
+        "path": "case_005_tree_window/generated_attempt_01.dfy",
+        "bytes": 4470,
+        "sha256": "b978ee9c257d49caa3935066442f09244485e5faae2a40fc3f77154c7c03773c",
+        "normalization": "append_single_trailing_lf"
+      },
+      "retained_structured_log": {
+        "bytes": 170038,
+        "lines": 38,
+        "sha256": "ab1b069db56cd649b8b39dc755e1b235dd76614ffa694ca1e1a0d4a1090fc528"
+      }
+    }
+  ]
+}

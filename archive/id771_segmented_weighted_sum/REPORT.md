@@ -2,7 +2,7 @@
 
 > **Not one of the active five cases and not included in their experimental
 > count.** This candidate is retained only as an audit record. It was replaced
-> by `../case_005_tree_window/` because the executable specification function
+> by `../../case_005_tree_window/` because the executable specification function
 > made its generated target implementation too direct for the intended
 > programming-nontriviality criterion.
 
@@ -22,7 +22,7 @@ examples.
 
 ID771 maps to:
 
-`DafnyBench/DafnyBench/dataset/ground_truth/veri-sparse_tmp_tmp15fywna6_dafny_spmv.dfy`
+`third_party/DafnyBench/DafnyBench/dataset/ground_truth/veri-sparse_tmp_tmp15fywna6_dafny_spmv.dfy`
 
 The masked/generated names correspond to the reference names as follows:
 
@@ -131,20 +131,13 @@ equivalence proof relies on their verified contracts.
 The generated attempt was left unchanged. An anti-bypass scan found no
 `assume`, `{:verify false}`, `{:axiom}`, `{:extern}`, or `decreases *`.
 
-From the project root:
+From this repository root:
 
 ```bash
-./verifierbench/dafny verify \
-  verifierbench/DafnyBench/DafnyBench/dataset/ground_truth/veri-sparse_tmp_tmp15fywna6_dafny_spmv.dfy
-
-./verifierbench/dafny verify \
-  verifierbench/pilot_cases/case_005_segmented_weighted_sum/generated_attempt_01.dfy
-
-./verifierbench/dafny verify --verify-included-files \
-  verifierbench/pilot_cases/case_005_segmented_weighted_sum/comparison_harness.dfy
+./reproduce.sh --case archive-771
 ```
 
 The two warnings emitted for the ground truth (and repeated when it is
 included by the harness) concern deprecated unnecessary semicolons on
-`requires` clauses. They are not verification errors. Concise command results
-are recorded in `verification.txt`.
+`requires` clauses. They are not verification errors. Historical command
+results are preserved in `verification.txt`.

@@ -16,7 +16,7 @@ selected for having a simple scalar output.
 
 The original source is:
 
-`DafnyBench/DafnyBench/dataset/ground_truth/AssertivePrograming_tmp_tmpwf43uz0e_Find_Substring.dfy`
+`third_party/DafnyBench/DafnyBench/dataset/ground_truth/AssertivePrograming_tmp_tmpwf43uz0e_Find_Substring.dfy`
 
 ## Agent input
 
@@ -127,18 +127,13 @@ index is considered meaningful on failure.
 
 ## Reproduction
 
-From the project root:
+From this repository root:
 
 ```bash
-./verifierbench/dafny verify \
-  verifierbench/pilot_cases/case_001_substring_occurrence/generated_attempt_01.dfy
-
-./verifierbench/dafny verify --verify-included-files \
-  verifierbench/pilot_cases/case_001_substring_occurrence/comparison_harness.dfy
-
-./verifierbench/dafny run \
-  verifierbench/pilot_cases/case_001_substring_occurrence/comparison_harness.dfy \
-  -t:py
+./reproduce.sh --case 001
 ```
 
-Concise command outputs are recorded in `verification.txt`.
+This installs or checks the pinned dependencies, verifies the reference,
+generated attempt, and combined harness, and runs the concrete counterexample
+without writing compiler output into the case directory. Historical command
+outputs are preserved in `verification.txt`.

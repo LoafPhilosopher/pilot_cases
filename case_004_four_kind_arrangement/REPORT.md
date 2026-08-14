@@ -9,7 +9,7 @@ leave room for two verified implementations to return different sequences?
 
 - Generated attempt: `generated_attempt_01.dfy`
 - DafnyBench ground truth ID690:
-  `DafnyBench/DafnyBench/dataset/ground_truth/formal_verication_dafny_tmp_tmpwgl2qz28_Challenges_ex7.dfy`
+  `third_party/DafnyBench/DafnyBench/dataset/ground_truth/formal_verication_dafny_tmp_tmpwgl2qz28_Challenges_ex7.dfy`
 - Machine-checked relational proof: `comparison_harness.dfy`
 
 The ground truth calls its constructors `A`, `C`, `G`, and `T` and its ordering
@@ -108,17 +108,10 @@ errors. An anti-bypass scan of the generated attempt found no `assume`,
 
 ## Reproduction
 
-From the project root:
+From this repository root:
 
 ```bash
-./verifierbench/dafny verify \
-  verifierbench/DafnyBench/DafnyBench/dataset/ground_truth/formal_verication_dafny_tmp_tmpwgl2qz28_Challenges_ex7.dfy
-
-./verifierbench/dafny verify \
-  verifierbench/pilot_cases/case_004_four_kind_arrangement/generated_attempt_01.dfy
-
-./verifierbench/dafny verify --verify-included-files \
-  verifierbench/pilot_cases/case_004_four_kind_arrangement/comparison_harness.dfy
+./reproduce.sh --case 004
 ```
 
-Concise outputs are recorded in `verification.txt`.
+Historical command outputs are preserved in `verification.txt`.

@@ -16,7 +16,7 @@ This is a general, unbounded relational proof rather than bounded testing.
 
 The hidden reference is DafnyBench ID491:
 
-`DafnyBench/DafnyBench/dataset/ground_truth/dafny-rope_tmp_tmpl4v_njmy_Rope.dfy`
+`third_party/DafnyBench/DafnyBench/dataset/ground_truth/dafny-rope_tmp_tmpl4v_njmy_Rope.dfy`
 
 Its target is the original `report` method. The source supplied for generation
 renames the module, class, fields, invariant, and target method, and removes the
@@ -111,17 +111,10 @@ eliminated. Name masking only reduces obvious benchmark fingerprints.
 
 ## Reproduction
 
-From the project root:
+From this repository root:
 
 ```bash
-./verifierbench/dafny verify \
-  verifierbench/pilot_cases/case_005_tree_window/generated_attempt_01.dfy
-
-./verifierbench/dafny verify \
-  verifierbench/DafnyBench/DafnyBench/dataset/ground_truth/dafny-rope_tmp_tmpl4v_njmy_Rope.dfy
-
-./verifierbench/dafny verify --verify-included-files \
-  verifierbench/pilot_cases/case_005_tree_window/comparison_harness.dfy
+./reproduce.sh --case 005
 ```
 
-Concise results and isolation evidence are recorded in `verification.txt`.
+Historical results and isolation evidence are preserved in `verification.txt`.

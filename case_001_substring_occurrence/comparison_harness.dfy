@@ -1,4 +1,4 @@
-include "../../DafnyBench/DafnyBench/dataset/ground_truth/AssertivePrograming_tmp_tmpwf43uz0e_Find_Substring.dfy"
+include "../third_party/DafnyBench/DafnyBench/dataset/ground_truth/AssertivePrograming_tmp_tmpwf43uz0e_Find_Substring.dfy"
 include "generated_attempt_01.dfy"
 
 method {:main} Counterexample() {

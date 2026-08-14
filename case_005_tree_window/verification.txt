@@ -1,3 +1,9 @@
+Standalone reproduction note (added 2026-08-14)
+================================================
+The commands below were recorded in the original parent workspace and retain
+their historical paths. From a standalone clone, use:
+  ./reproduce.sh --case 005
+
 Environment
 ===========
 DafnyBench commit: 0cd28feed9cd0179b07fdb9d002f8c39063658e4

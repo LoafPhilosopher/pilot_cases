@@ -1,0 +1,6 @@
+.tools/
+.repro/
+third_party/
+**/*-py/
+**/__pycache__/
+*.py[cod]

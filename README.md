@@ -1,105 +1,127 @@
-# Five-case exploratory study: generated Dafny programs and hidden references
+# Five-case preliminary feasibility pilot: generated Dafny programs and hidden references
 
-## Scope
+## Status
 
-This is a small exploratory case study, not a new benchmark or a modification
-of DafnyBench's official evaluation. It asks what can be concluded about
-behavioral equivalence when a Coding Agent sees a method interface and formal
-specification, but not the benchmark's reference body, and generates a program
-that is then checked by Dafny.
+This repository contains a technically checked **five-case preliminary
+feasibility pilot**. It is not the requested 10–20-task study, a new benchmark,
+or a modification of DafnyBench's official evaluation, and it should not be
+presented as completion of Jocelyn's current request.
 
-Five programming-nontrivial DafnyBench tasks were selected by hand. The set
-includes witness-returning contracts, nested sequence construction, datatype
-arrangement, and interval extraction over a heap-allocated tree; it was not
-selected for simple outputs or pre-labelled strong/weak specifications.
+The next advisor-facing artifact is [`SHORTLIST.md`](SHORTLIST.md): 15
+DafnyBench candidates with short, source-based reasons for their programming
+difficulty. Five are the already-run pilot cases and ten are proposed
+extensions. No generation has been run on those ten candidates; they should be
+reviewed and frozen before any further experiment.
 
-## Lightweight protocol
+The active five-case set was not preregistered. An initial ID771 run was
+replaced after its executable specification made synthesis too direct. That
+run remains visible in [`archive/id771_segmented_weighted_sum/`](archive/id771_segmented_weighted_sum/),
+but it is not counted as an active sixth case. This post-generation replacement
+means the pilot must not be used for aggregate performance claims.
 
-For each task:
+## What the pilot examined
 
-1. Preserve the pinned DafnyBench implementation as the hidden reference.
-2. Remove the reference body, examples, source-identifying comments, and
-   algorithm-revealing names. Keep the method header, contract, and the minimum
+Each case asks what can be concluded about behavioral equivalence when a
+Coding Agent sees a method interface, contract, and necessary context, but not
+the benchmark's reference body. The five active tasks cover nested search,
+higher-order trace construction, witness selection, datatype arrangement, and
+interval extraction over a heap-allocated tree. They were chosen for
+programming non-triviality and mechanism diversity, not for simple outputs or
+pre-labelled “strong/weak” specifications.
+
+## Procedure actually used
+
+For each active task:
+
+1. The implementation at pinned DafnyBench commit
+   `0cd28feed9cd0179b07fdb9d002f8c39063658e4` was retained as a hidden
+   reference.
+2. The reference body, examples, source-identifying comments, sibling
+   solutions, and algorithm-revealing names were removed. The model received
+   the neutrally renamed target header, its original contract, and the minimum
    definitions needed to understand and verify it.
-3. Give that source to one isolated `gpt-5.6-sol` Coding Agent, explicitly
-   prohibit Web/network, tool, filesystem, other-agent, and reference use, and
-   audit the generation log for calls. The hidden reference is not placed in
-   the generation context.
-4. Preserve the first raw generation without repair and verify it with Dafny
+3. One isolated `gpt-5.6-sol` generation was instructed not to browse or search
+   the Web, call tools, inspect the filesystem, contact other agents, or access
+   the hidden reference.
+4. The first response was preserved without repair and checked with Dafny
    4.3.0.
-5. Only for verifier-pass attempts, compare the generated and reference
-   programs using a concrete counterexample or a machine-checked relational
-   theorem, and state the observation relation precisely.
+5. Only a verifier-pass candidate entered equivalence analysis. The comparison
+   used a concrete counterexample or a machine-checked relational theorem and
+   stated the relevant observation relation.
 
-Environment:
+Across the active set there were **5 generation attempts; equivalence analysis
+was performed for the 4 verifier-pass attempts.** The remaining attempt is
+retained as a verifier-fail result, not treated as an equivalence case.
 
-- DafnyBench commit: `0cd28feed9cd0179b07fdb9d002f8c39063658e4`
-- Dafny: `4.3.0`
-- Generation attempts: one per task
-- Experimental count across the five active cases: **5 generation attempts;
-  equivalence analysis was performed for the 4 verifier-pass attempts.** The
-  remaining attempt is kept as a verifier-fail generation result, not as an
-  equivalence case. These five hand-selected observations are not treated as a
-  statistical pass-rate estimate.
-- Generation-log audit: zero Web/network, tool, filesystem, or outbound-agent
-  calls before the saved response for every active case
-- Forbidden-feature scan: no `assume`, `{:verify false}`, `{:axiom}`,
-  `{:extern}`, `decreases *`, or generated `print` in any attempt
+The prompt-level prohibition was audited against the locally retained
+structured logs: there were zero tool, Web, filesystem, or outbound-agent
+calls before the first saved response in each active case. Tools existed in the
+execution environment, so this is evidence of zero actual use, not
+capability-level removal. See [`provenance/manifest.json`](provenance/manifest.json)
+for model settings, generation-artifact hashes, raw-response hashes, and
+limitations.
 
-The status descriptions below summarize evidence in this pilot; they are not a
-new official benchmark label scheme.
+## Preliminary pilot results
 
-## Results
-
-| Case | DafnyBench task | First generation | Equivalence result |
+| Case | DafnyBench task | First generation | Post-gate comparison |
 |---|---|---|---|
 | [001](case_001_substring_occurrence/REPORT.md) | ID004, substring occurrence witness | `3 verified, 0 errors` | **Concrete counterexample to raw tuple equality.** On `("a","b")`, reference returns `(false,1)` and generated returns `(false,0)`. They agree if the failure index is unobservable; by code inspection they also agree on success. |
-| [002](case_002_local_transition_trace/REPORT.md) | ID117, higher-order local transition trace | `3 verified, 2 errors` | **Verifier-fail; comparison gate not entered.** The untouched attempt has two index-safety proof failures in a sequence-constructor helper. |
-| [003](case_003_repeated_value_pair/REPORT.md) | ID311, select two repeated values | `18 verified, 0 errors` | **Concrete counterexamples.** `[0,1,1,0]` reverses pair order; `[0,1,2,2,1,0]` makes the implementations choose different two-value subsets. Both outputs satisfy the contract. Raw pairs agree exactly when the first two values selected by first-occurrence and second-occurrence order coincide in the same order; with exactly two duplicate values, their unordered witness sets agree. |
-| [004](case_004_four_kind_arrangement/REPORT.md) | ID690, arrange four datatype constructors | `18 verified, 0 errors` | **Machine-proved equivalent modulo the intentional constructor renaming.** `ValidArrangement` plus multiset preservation uniquely determines the result; combined harness: `49 verified, 0 errors`. |
-| [005](case_005_tree_window/REPORT.md) | ID491, interval extraction from a tree-structured string | `3 verified, 0 errors` | **Machine-proved output-equivalent under equal abstract string models.** The returned strings are equal for every shared permitted interval; combined harness: `26 verified, 0 errors`. |
+| [002](case_002_local_transition_trace/REPORT.md) | ID117, higher-order local transition trace | `3 verified, 2 errors` | **Verifier-fail; comparison gate not entered.** The untouched attempt has two index-safety proof failures. |
+| [003](case_003_repeated_value_pair/REPORT.md) | ID311, select two repeated values | `18 verified, 0 errors` | **Concrete counterexamples.** One input reverses pair order and another changes the selected two-value subset. Raw pairs agree exactly when the two implementations' selection orders choose the same first two values in the same order; with exactly two duplicate values, their unordered witness sets agree. |
+| [004](case_004_four_kind_arrangement/REPORT.md) | ID690, arrange four datatype constructors | `18 verified, 0 errors` | **Machine-proved equivalent modulo constructor renaming.** The contract and multiset preservation uniquely determine the result; combined harness: `49 verified, 0 errors`. |
+| [005](case_005_tree_window/REPORT.md) | ID491, interval extraction from a tree-structured string | `3 verified, 0 errors` | **Machine-proved output-equivalent under equal abstract string models.** The returned strings agree for every shared permitted interval; combined harness: `26 verified, 0 errors`. |
 
-## Main observations
+The main observation is that verifier success establishes contract conformance,
+not automatically equality of every raw return value. Cases 001 and 003 expose
+open witness choices; cases 004 and 005 show that different implementations
+can be related for all inputs when the specified observation is uniquely
+determined.
 
-1. **Verifier success establishes contract conformance, not automatically full
-   reference equality.** Cases 001 and 003 pass the same semantic requirements
-   as their references yet return observably different raw values.
-2. **The relevant question is which observations the contract determines.**
-   In case 001 the failure index is open. In case 003 witness choice and order
-   are open. In case 005 the exact returned string is fixed by the abstract
-   input model and interval.
-3. **Very different algorithms can still be proved equivalent.** Case 004's
-   reference uses a four-region partition, while the generation uses functional
-   insertion sort. Case 005 independently reconstructs the reference's
-   tree-decomposition semantics, including one-sided and cross-split intervals.
-4. **A failed proof attempt is informative and must remain visible.** Case 002
-   generated the intended recurrence but did not discharge two array-index
-   obligations; it was not repaired or removed from the denominator.
+## Reproduce
+
+On a glibc-based Linux x86-64 system compatible with the official Ubuntu 20.04
+package, the following command downloads and verifies Dafny 4.3.0, checks out
+the exact DafnyBench commit, and reproduces all five active cases:
+
+```bash
+./reproduce.sh
+```
+
+Case 002 is expected to report `3 verified, 2 errors`; the script checks that
+this recorded failure is reproduced rather than treating it as a script
+failure. Detailed requirements, per-case commands, offline overrides, and the
+archived ID771 option are in [`REPRODUCING.md`](REPRODUCING.md). Each run's
+logs are written under an ignored timestamped directory in `.repro/runs/`.
 
 ## Evidence boundaries
 
 - Cases 004 and 005 contain general, unbounded Dafny relational proofs.
-- Cases 001 and 003 contain verified precondition/contract harnesses plus
-  executable concrete counterexamples. Their exact printed return values are
-  runtime observations; broader implementation-strategy statements are marked
-  as code-inspection conclusions in their reports.
-- Name masking reduces obvious benchmark fingerprints but does not prove that
-  the model never encountered related material during training.
-- This study uses one model, one sample per task, and five hand-selected tasks.
-  It is evidence for interesting mechanisms, not a statistical estimate of
-  model or benchmark-wide behavior.
-- The earlier ID771 segmented-sum candidate is retained under
-  `case_005_segmented_weighted_sum/` as a superseded audit record. It is not
-  counted as an active sixth case because its executable specification function
-  made the target implementation too direct.
+- Cases 001 and 003 contain verified precondition/contract harnesses and
+  executable counterexamples. Broader implementation-strategy statements are
+  explicitly identified as conclusions from code inspection.
+- Name masking reduces obvious benchmark fingerprints but cannot prove that
+  related material was absent from model training.
+- The five tasks, one model, one sample per task, and the post-generation ID771
+  replacement make this a mechanism-discovery pilot, not a pass-rate estimate.
+- Complete Codex JSONL logs are retained locally but not published because they
+  contain platform instructions, encrypted reasoning, local paths, and later
+  analysis turns. Public hashes anchor those logs for possible controlled
+  audit, but a hash alone cannot independently prove the zero-call claim.
+- The inter-agent task payload is encrypted in those logs. `PROMPT.md` is the
+  recorded prompt artifact, but this public repository alone cannot
+  independently prove byte-for-byte equality with that encrypted envelope.
 
-## Files in each case
+## Repository layout
 
+- `SHORTLIST.md`: advisor-facing 15-task candidate list; ten candidates remain
+  unrun
+- `case_001_*` through `case_005_*`: five active pilot cases
+- `archive/`: disclosed, excluded pilot material
 - `input_masked.dfy`: exact source skeleton exposed for generation
-- `PROMPT.md`: exact generation instruction and source
-- `generated_attempt_01.dfy`: untouched first generated program
-- `verification.txt`: model/environment metadata and concise verifier records
-- `REPORT.md`: case-specific generation outcome and, after the verifier gate,
-  equivalence analysis
-- `comparison_harness.dfy`: relational proof or executable counterexample,
-  when the generated attempt passed verification
+- `PROMPT.md`: recorded generation instruction and source
+- `generated_attempt_01.dfy`: saved first generated program
+- `verification.txt`: historical environment and verifier record
+- `REPORT.md`: generation outcome and, after the verifier gate, comparison
+- `comparison_harness.dfy`: relational proof or executable counterexample
+- `provenance/manifest.json` and `provenance/SHA256SUMS`: generation metadata
+  and integrity anchors

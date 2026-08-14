@@ -1,4 +1,4 @@
-include "../../DafnyBench/DafnyBench/dataset/ground_truth/dafny-rope_tmp_tmpl4v_njmy_Rope.dfy"
+include "../third_party/DafnyBench/DafnyBench/dataset/ground_truth/dafny-rope_tmp_tmpl4v_njmy_Rope.dfy"
 include "generated_attempt_01.dfy"
 
 method ImplementationsAgree(

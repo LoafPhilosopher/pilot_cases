@@ -1,4 +1,4 @@
-# Exact generation prompt
+# Recorded generation prompt
 
 The Coding Agent was isolated from the ground-truth implementation and was
 instructed not to use Web search, tools, or the filesystem. The generation log

@@ -15,7 +15,7 @@ only the neutral interface in `input_masked.dfy`.
 
 Hidden reference:
 
-`DafnyBench/DafnyBench/dataset/ground_truth/DafnyPrograms_tmp_tmp74_f9k_c_automaton.dfy`
+`third_party/DafnyBench/DafnyBench/dataset/ground_truth/DafnyPrograms_tmp_tmp74_f9k_c_automaton.dfy`
 
 ## One-shot generation result
 
@@ -55,11 +55,12 @@ this recorded first-attempt outcome.
 
 ## Reproduction
 
-From the project root:
+From this repository root:
 
 ```bash
-./verifierbench/dafny verify \
-  verifierbench/pilot_cases/case_002_local_transition_trace/generated_attempt_01.dfy
+./reproduce.sh --case 002
 ```
 
-The concise result and reference command are recorded in `verification.txt`.
+The script treats the recorded `3 verified, 2 errors` result as an expected
+outcome and fails if it changes. Historical commands are preserved in
+`verification.txt`.

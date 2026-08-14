@@ -15,7 +15,7 @@ The ground truth returns `(1, 0)`, while the generated implementation returns
 
 ID 311 maps to:
 
-`DafnyBench/DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny2_COST-verif-comp-2011-3-TwoDuplicates.dfy`
+`third_party/DafnyBench/DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny2_COST-verif-comp-2011-3-TwoDuplicates.dfy`
 
 ## Formal-verification claims
 
@@ -132,21 +132,12 @@ under a formally specified occurrence order.
 
 ## Reproduction
 
-From the project root:
+From this repository root:
 
 ```bash
-./verifierbench/dafny verify \
-  verifierbench/pilot_cases/case_003_repeated_value_pair/generated_attempt_01.dfy
-
-./verifierbench/dafny verify \
-  'verifierbench/DafnyBench/DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny2_COST-verif-comp-2011-3-TwoDuplicates.dfy'
-
-./verifierbench/dafny verify --verify-included-files \
-  verifierbench/pilot_cases/case_003_repeated_value_pair/comparison_harness.dfy
-
-./verifierbench/dafny run \
-  verifierbench/pilot_cases/case_003_repeated_value_pair/comparison_harness.dfy \
-  -t:py
+./reproduce.sh --case 003
 ```
 
-Concise outputs are recorded in `verification.txt`.
+The script verifies all three units and runs both concrete counterexamples
+without writing compiler output into the case directory. Historical outputs
+are preserved in `verification.txt`.

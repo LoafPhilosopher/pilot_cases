@@ -1,4 +1,4 @@
-include "../../DafnyBench/DafnyBench/dataset/ground_truth/veri-sparse_tmp_tmp15fywna6_dafny_spmv.dfy"
+include "../../third_party/DafnyBench/DafnyBench/dataset/ground_truth/veri-sparse_tmp_tmp15fywna6_dafny_spmv.dfy"
 include "generated_attempt_01.dfy"
 
 // The masked/generated function and ID771's function compute the same

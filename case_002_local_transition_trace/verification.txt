@@ -1,3 +1,9 @@
+Standalone reproduction note (added 2026-08-14)
+================================================
+The commands below were recorded in the original parent workspace and retain
+their historical paths. From a standalone clone, use:
+  ./reproduce.sh --case 002
+
 Case: 002 local transition trace
 Date: 2026-08-13
 Dafny: 4.3.0
