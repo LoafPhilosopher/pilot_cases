@@ -1,0 +1,50 @@
+Environment
+===========
+DafnyBench commit: 0cd28feed9cd0179b07fdb9d002f8c39063658e4
+Dafny version: 4.3.0
+Generation date: 2026-08-06
+Generation model: gpt-5.6-sol
+Generation attempts: 1
+Generation session: 019fd6f4-9779-7ae1-a913-9ee29c60a414
+Observed Web/tool/filesystem/outbound-agent calls before response: 0
+Reference included in generation context: no
+Repair before first verification: none
+
+Ground-truth verification
+=========================
+Command:
+  ./verifierbench/dafny verify <DafnyBench ground-truth file>
+Result:
+  Dafny program verifier finished with 12 verified, 0 errors
+
+Generated attempt 01 verification
+=================================
+Command:
+  ./verifierbench/dafny verify verifierbench/pilot_cases/case_001_substring_occurrence/generated_attempt_01.dfy
+Result:
+  Dafny program verifier finished with 3 verified, 0 errors
+
+Combined verification
+=====================
+Command:
+  ./verifierbench/dafny verify --verify-included-files verifierbench/pilot_cases/case_001_substring_occurrence/comparison_harness.dfy
+Result:
+  Dafny program verifier finished with 16 verified, 0 errors
+
+Anti-bypass scan of generated attempt 01
+========================================
+Checked for: assume, {:verify false}, {:axiom}, {:extern}, decreases *
+Result: no matches (ripgrep exit code 1 with empty output)
+
+Concrete behavioral counterexample
+==================================
+Command:
+  ./verifierbench/dafny run verifierbench/pilot_cases/case_001_substring_occurrence/comparison_harness.dfy -t:py
+Result:
+  Dafny program verifier finished with 1 verified, 0 errors
+  input: source="a", pattern="b"
+  ground truth: ok=false, index=1
+  generated:    ok=false, index=0
+
+The run command verifies the harness itself. The separate combined-verification
+command above verifies both included implementations as well.

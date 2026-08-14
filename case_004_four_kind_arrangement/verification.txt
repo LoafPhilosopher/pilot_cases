@@ -1,0 +1,56 @@
+Environment
+===========
+DafnyBench commit: 0cd28feed9cd0179b07fdb9d002f8c39063658e4
+Dafny version: 4.3.0
+Generation date: 2026-08-13
+Generation model: gpt-5.6-sol
+Generation attempts: 1
+Generation session: 019ff9f5-222b-7391-bc89-dc805f79eadc
+Observed Web/tool/filesystem/outbound-agent calls before response: 0
+Reference included in generation context: no
+Repair before first verification: none
+
+Ground-truth verification (DafnyBench ID690)
+================================================
+Command:
+  ./verifierbench/dafny verify verifierbench/DafnyBench/DafnyBench/dataset/ground_truth/formal_verication_dafny_tmp_tmpwgl2qz28_Challenges_ex7.dfy
+Result:
+  Dafny program verifier finished with 6 verified, 0 errors
+Notes:
+  Two warnings report deprecated unnecessary semicolons in the original file.
+
+Generated attempt 01 verification
+=================================
+Command:
+  ./verifierbench/dafny verify verifierbench/pilot_cases/case_004_four_kind_arrangement/generated_attempt_01.dfy
+Result:
+  Dafny program verifier finished with 18 verified, 0 errors
+
+Combined relational verification
+================================
+Command:
+  ./verifierbench/dafny verify --verify-included-files verifierbench/pilot_cases/case_004_four_kind_arrangement/comparison_harness.dfy
+Result:
+  Dafny program verifier finished with 49 verified, 0 errors
+Proved properties:
+  - UniqueValidArrangement: any two ValidArrangement sequences with equal
+    multisets are equal, for arbitrary sequence lengths.
+  - GeneratedCallsAgree: two Transform calls on the same input are equal.
+  - GroundTruthCallsAgree: two Sorter calls on the same input are equal.
+  - ImplementationsAgree: Encode(Sorter(items)) equals
+    Transform(Encode(items)).
+Notes:
+  The same two deprecated-semicolon warnings originate in the included
+  ground-truth file.
+
+Anti-bypass scan of generated attempt 01
+========================================
+Checked for:
+  assume, {:verify false}, {:axiom}, {:extern}, decreases *
+Result:
+  no matches (ripgrep exit code 1 with empty output)
+
+Classification
+==============
+  PROVED UNIQUE / PROVED EQUIVALENT MODULO THE CONSTRUCTOR BIJECTION
+  This is an unbounded relational proof, not bounded testing.

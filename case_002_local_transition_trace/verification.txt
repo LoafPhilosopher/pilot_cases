@@ -1,0 +1,41 @@
+Case: 002 local transition trace
+Date: 2026-08-13
+Dafny: 4.3.0
+DafnyBench commit: 0cd28feed9cd0179b07fdb9d002f8c39063658e4
+Reference test ID: 117
+Generation attempts: 1
+Generation model: gpt-5.6-sol
+Generation session: 019ff9f4-e032-7ba2-8672-c73b01dfea19
+Observed Web/tool/filesystem/outbound-agent calls before response: 0
+Reference included in generation context: no
+Generation repair before verification: none
+
+Reference command:
+  ./verifierbench/dafny verify verifierbench/DafnyBench/DafnyBench/dataset/ground_truth/DafnyPrograms_tmp_tmp74_f9k_c_automaton.dfy
+
+Reference result:
+  Dafny program verifier finished with 3 verified, 0 errors
+
+Generated command:
+  ./verifierbench/dafny verify verifierbench/pilot_cases/case_002_local_transition_trace/generated_attempt_01.dfy
+
+Generated result:
+  exit code 4
+  Dafny program verifier finished with 3 verified, 2 errors
+
+Generated error locations:
+  generated_attempt_01.dfy(177,19): Error: index out of range
+  generated_attempt_01.dfy(177,31): Error: index out of range
+
+Both errors occur in the fallback branch of the sequence-constructor lambda in
+BuildNext. Dafny cannot establish that j-1 and j are valid indices in that
+expression. This is the untouched first generation; it was not repaired.
+
+Bypass/side-effect screen over the five active generated attempts:
+  rg -n -i 'assume|\{:[[:space:]]*(verify[[:space:]]+false|axiom|extern)|decreases[[:space:]]+\*|(^|[^[:alnum:]_])print([[:space:](;]|$)' \
+    verifierbench/pilot_cases/case_001_substring_occurrence/generated_attempt_01.dfy \
+    verifierbench/pilot_cases/case_002_local_transition_trace/generated_attempt_01.dfy \
+    verifierbench/pilot_cases/case_003_repeated_value_pair/generated_attempt_01.dfy \
+    verifierbench/pilot_cases/case_004_four_kind_arrangement/generated_attempt_01.dfy \
+    verifierbench/pilot_cases/case_005_tree_window/generated_attempt_01.dfy
+  exit code 1, no matches
