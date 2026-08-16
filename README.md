@@ -7,7 +7,15 @@ feasibility pilot** and a completed, prospectively frozen **ten-case
 extension**. It is not a new benchmark or a modification of DafnyBench's
 official evaluation.
 
-On 2026-08-16, the researcher reported advisor approval of the 15-task plan.
+For the current study scope, evidence boundaries, and case-level exceptions,
+read [`STUDY_SCOPE.md`](STUDY_SCOPE.md) first. The remaining files preserve the
+more detailed technical record.
+
+The task count and selection rationale follow advisor guidance to study 10–20
+non-trivial programming tasks. The exact ten-task extension list was selected
+by the researcher and frozen before generation; see
+[`STUDY_SCOPE.md`](STUDY_SCOPE.md).
+
 The ten extension inputs, prompts, one-sample rule, and observation relations
 were frozen at commit
 `8b6218c8cc8d235adf24f3c9832a4d70de302983` before any extension output was
@@ -16,6 +24,10 @@ requested. The immutable pre-generation snapshot is listed in
 [`EXTENSION_PROTOCOL.md`](EXTENSION_PROTOCOL.md). All ten frozen first
 attempts have now been run without retries, repairs, or replacements; their
 outcomes are reported in [`EXTENSION_RESULTS.md`](EXTENSION_RESULTS.md).
+
+`SHORTLIST.md` and `EXTENSION_PROTOCOL.md` are preserved historical
+pre-generation artifacts. Current scope and interpretation are stated in
+`STUDY_SCOPE.md`.
 
 The active five-case set was not preregistered. An initial ID771 run was
 replaced after its executable specification made synthesis too direct. That
@@ -46,10 +58,12 @@ For each task:
 1. The implementation at pinned DafnyBench commit
    `0cd28feed9cd0179b07fdb9d002f8c39063658e4` was retained as a hidden
    reference.
-2. The reference body, examples, source-identifying comments, sibling
-   solutions, and algorithm-revealing names were removed. The model received
-   the neutrally renamed target header, its original contract, and the minimum
-   definitions needed to understand and verify it.
+2. The recorded task prompts removed the reference body, examples,
+   source-identifying comments, sibling solutions, and algorithm-revealing
+   declaration names. The model received the neutrally renamed target header,
+   its contract, and the minimum definitions needed to understand and verify
+   it. A later log audit found a separate platform-metadata filename leak for
+   Cases 006, 007, and 012; it is disclosed below and in `STUDY_SCOPE.md`.
 3. One fresh-context `gpt-5.6-sol` generation was instructed not to browse or search
    the Web, call tools, inspect the filesystem, contact other agents, or access
    the hidden reference.
@@ -77,7 +91,15 @@ structured logs. The five pilot cases and nine of ten extension cases had zero
 tool, Web, filesystem, or outbound-agent calls before the saved response;
 Case 006 had the disclosed outbound progress call. Tools existed in the
 execution environment, so these are actual-use observations, not
-capability-level removal. See
+capability-level removal.
+
+A distinct masking limitation was also found in the platform `world_state`:
+historical command metadata exposed the identifying filename terms
+`LFUSimple.dfy`, `BST.dfy`, and `MajorityVote.dfy` to the generation contexts
+for Cases 006, 007, and 012, respectively. No reference body was exposed and no
+filesystem or Web call retrieved one, but these three runs are
+filename-mask-confounded and are not clean evidence for the effectiveness of
+name masking. See
 [`provenance/manifest.json`](provenance/manifest.json) and
 [`provenance/extension_manifest.json`](provenance/extension_manifest.json)
 for model settings, generation-artifact hashes, raw-response hashes, exact
@@ -147,6 +169,10 @@ run's logs are written under an ignored timestamped directory in
   explicitly identified as conclusions from code inspection.
 - Name masking reduces obvious benchmark fingerprints but cannot prove that
   related material was absent from model training.
+- A post-run `world_state` audit found exact identifying target-filename terms
+  for extension Cases 006, 007, and 012. Their prompts still withheld the
+  bodies, and their logs show no file or Web access, but they must be treated as
+  filename-mask-confounded rather than clean masked-name trials.
 - The five tasks, one model, one sample per task, and the post-generation ID771
   replacement make this a mechanism-discovery pilot, not a pass-rate estimate.
 - The extension was prospectively frozen, but ten tasks and one sample per task
@@ -162,8 +188,10 @@ run's logs are written under an ignored timestamped directory in
 
 ## Repository layout
 
-- `SHORTLIST.md`: immutable advisor-facing shortlist and pre-generation status
-  snapshot; later outcomes are in `EXTENSION_RESULTS.md`
+- `STUDY_SCOPE.md`: concise advisor-facing scope, counts, and claim boundaries
+- `SHORTLIST.md`: historical frozen task-selection snapshot; later outcomes
+  are in `EXTENSION_RESULTS.md`
+- `EXTENSION_PROTOCOL.md`: historical frozen pre-generation procedure
 - `case_001_*` through `case_005_*`: five active pilot cases
 - `case_006_*` through `case_015_*`: ten prospectively frozen extension cases
 - `archive/`: disclosed, excluded pilot material

@@ -7,6 +7,10 @@ The ten cases below were selected and frozen before generation at Git commit
 `gpt-5.6-sol` first attempt at `ultra` reasoning effort. No verifier-driven
 retry, repair, replacement, or extra generation was made.
 
+This extension operationalizes the advisor-guided 10–20-task direction, but
+is reported as exploratory evidence rather than an advisor-approved benchmark
+or a model-performance evaluation.
+
 The raw denominators are:
 
 - **10 first attempts**;
@@ -17,8 +21,9 @@ The raw denominators are:
 The remaining attempt, Case 006, verifies but is reported separately because
 the generation agent made one prohibited outbound progress call before its
 final code response. The attempt and message were retained rather than
-replaced. No generation used Web search, a network interface, the filesystem,
-or a hidden reference.
+replaced. The logs record no Web search, network-interface use, filesystem
+call, or reference-body retrieval in any of the ten generations. This is an
+actual-use statement, not a claim that those capabilities were absent.
 
 ## Results
 
@@ -64,3 +69,21 @@ The last form is not described as an end-to-end automatic relational proof.
 Complete internal generation logs are retained locally but are not published;
 the public provenance manifests record response and log hashes, settings,
 call counts, and the limits of independent audit.
+
+A post-run audit of those retained logs found an additional masking limitation.
+Platform `world_state` metadata contained historical command/file names, and
+the contexts for Cases 006, 007, and 012 exposed their corresponding identifying
+filename terms `LFUSimple.dfy`, `BST.dfy`, and `MajorityVote.dfy`. No reference
+body was present in that metadata, and none of the three agents read a file or
+used Web/network access. Their generated and equivalence results remain valid
+as recorded, but these cases are filename-mask-confounded and cannot support a
+clean claim that neutralized prompt names removed benchmark-recognition cues.
+This is separate from the outbound-call violation in Case 006.
+
+Case 013 uses a pregeneration-normalized specification variant and is reported
+as a distinct input condition, not as a direct original-specification case. It
+uses the pre-frozen denotational ghost-state normalization described in its
+pre-generation record rather than exposing the source's executable transition
+helper. Case 014 is intentionally a recognizable-problem contamination stress
+case. These boundaries should accompany any advisor-facing interpretation of
+the ten-case table.

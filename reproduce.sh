@@ -108,6 +108,38 @@ run_expected_fail() {
   fi
 }
 
+require_log_contains() {
+  local label="$1"
+  local expected="$2"
+  local log="$logs_dir/$label.log"
+
+  if ! grep -Fq -- "$expected" "$log"; then
+    echo "recorded diagnostic for $label was not found:" >&2
+    echo "  $expected" >&2
+    echo "full output:" >&2
+    sed -n '1,240p' "$log" >&2
+    exit 1
+  fi
+}
+
+require_log_count() {
+  local label="$1"
+  local expected_count="$2"
+  local expected="$3"
+  local log="$logs_dir/$label.log"
+  local actual_count
+
+  actual_count="$(grep -Fc -- "$expected" "$log" || true)"
+  if [[ "$actual_count" -ne "$expected_count" ]]; then
+    echo "recorded diagnostic count for $label did not reproduce:" >&2
+    echo "  expected $expected_count occurrence(s), found $actual_count" >&2
+    echo "  diagnostic: $expected" >&2
+    echo "full output:" >&2
+    sed -n '1,240p' "$log" >&2
+    exit 1
+  fi
+}
+
 stage_runtime_case() {
   local id="$1"
   local case_dir="$2"
@@ -235,6 +267,7 @@ run_009() {
   local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_algorithms and leetcode_heap2.dfy"
   run_ok "009-reference" "Dafny program verifier finished with 6 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
   run_expected_fail "009-generated" "Dafny program verifier finished with 5 verified, 1 error" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
+  require_log_contains "009-generated" "generated_attempt_01.dfy(51,15): Error: assignment might update an array element not in the enclosing context's modifies clause"
 }
 
 run_010() {
@@ -242,6 +275,7 @@ run_010() {
   local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny1_ListContents.dfy"
   run_ok "010-reference" "Dafny program verifier finished with 10 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
   run_expected_fail "010-generated" "17 resolution/type errors detected in generated_attempt_01.dfy" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
+  require_log_count "010-generated" 17 "Error: type seq<T> does not have a member Length"
 }
 
 run_011() {
@@ -266,6 +300,8 @@ run_013() {
   local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_lightening_verifier.dfy"
   run_ok "013-reference" "Dafny program verifier finished with 37 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
   run_expected_fail "013-generated" "Dafny program verifier finished with 6 verified, 2 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
+  require_log_contains "013-generated" "generated_attempt_01.dfy(226,12): Error: assignment might update an array element not in the enclosing context's modifies clause"
+  require_log_contains "013-generated" "generated_attempt_01.dfy(307,11): Error: assignment might update an array element not in the enclosing context's modifies clause"
 }
 
 run_014() {

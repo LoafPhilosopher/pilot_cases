@@ -22,10 +22,16 @@ The script:
 6. executes the concrete counterexamples for cases 001, 003, and 012.
 
 Cases 002, 009, 010, and 013 are recorded failures. Reproduction succeeds only
-when their saved first attempts reproduce the recorded diagnostics: Case 002
-has `3 verified, 2 errors`, Case 009 has `5 verified, 1 error`, Case 010 has 17
-resolution/type errors, and Case 013 has `6 verified, 2 errors`. The script
-does not repair or silently drop them.
+when their saved first attempts reproduce the recorded diagnostics, rather
+than merely returning a nonzero exit code. Case 002 has `3 verified, 2 errors`.
+Case 009 has `5 verified, 1 error` and must report at `(51,15)` that the array
+element assignment may update outside the enclosing modifies clause. Case 010
+must report exactly 17 occurrences of Dafny 4.3.0's diagnostic
+`Error: type seq<T> does not have a member Length`, together with its recorded
+17-error resolution summary. Case 013 has `6 verified, 2 errors`, and both
+modifies-clause diagnostics must occur at `(226,12)` and `(307,11)`. Thus an
+unrelated failure with the same error count is rejected. The script does not
+repair or silently drop any attempt.
 
 Case 006 verifies, but its generation log records one prohibited outbound
 progress call before the final code response. Reproduction checks the Dafny
