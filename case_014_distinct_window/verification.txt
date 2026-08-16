@@ -1,0 +1,38 @@
+Case 014 verification and comparison record
+Date: 2026-08-16
+Verifier: Dafny 4.3.0
+Network/Web used during verification and comparison: no
+
+Generated-attempt gate
+Command (from pilot_cases/):
+  taskset -c 0 ../dafny verify case_014_distinct_window/generated_attempt_01.dfy --cores 1
+Exit code: 0
+Exact verifier output:
+
+Dafny program verifier finished with 4 verified, 0 errors
+
+Hidden-reference check
+Command (from pilot_cases/):
+  taskset -c 0 ../dafny verify third_party/DafnyBench/DafnyBench/dataset/ground_truth/dafleet_tmp_tmpa2e4kb9v_0001-0050_0003-longest-substring-without-repeating-characters.dfy --cores 1
+Exit code: 0
+Exact verifier output:
+
+Dafny program verifier finished with 4 verified, 0 errors
+
+Relational harness
+Command (from pilot_cases/):
+  taskset -c 0 ../dafny verify case_014_distinct_window/comparison_harness.dfy --verify-included-files --cores 1
+Exit code: 0
+Exact verifier output:
+
+Dafny program verifier finished with 13 verified, 0 errors
+
+The relational harness declarations alone account for 5 verified, 0 errors;
+the combined command above also verifies both included source files.
+
+Interpretation:
+- primary executable integer: proved equal for all input strings;
+- ghost endpoints: proved equal under a unique-maximizer premise;
+- tied ghost witnesses: the contracts permit different endpoints, while body
+  inspection indicates matching first-maximum tie-breaking; this last bridge
+  is not asserted as a harness theorem.

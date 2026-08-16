@@ -7,7 +7,7 @@ skip_runtime=0
 include_archive=0
 
 usage() {
-  echo "Usage: ./reproduce.sh [--case 001|002|003|004|005|archive-771|all] [--skip-runtime] [--include-archive]"
+  echo "Usage: ./reproduce.sh [--case 001..015|archive-771|all] [--skip-runtime] [--include-archive]"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -38,7 +38,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$selected" in
-  001|002|003|004|005|archive-771|all) ;;
+  001|002|003|004|005|006|007|008|009|010|011|012|013|014|015|archive-771|all) ;;
   *)
     echo "error: unsupported case: $selected" >&2
     usage >&2
@@ -62,7 +62,8 @@ mkdir -p "$logs_dir" "$runtime_dir"
 echo "Dafny cores: $dafny_cores"
 
 if [[ $skip_runtime -eq 0 &&
-      ("$selected" == "all" || "$selected" == "001" || "$selected" == "003") ]]; then
+      ("$selected" == "all" || "$selected" == "001" ||
+       "$selected" == "003" || "$selected" == "012") ]]; then
   command -v python3 >/dev/null 2>&1 || {
     echo "error: python3 is required for runtime counterexamples; use --skip-runtime to omit them" >&2
     exit 1
@@ -100,7 +101,11 @@ run_expected_fail() {
     sed -n '1,240p' "$log" >&2
     exit 1
   fi
-  grep -F "Dafny program verifier finished" "$log" | tail -n 1
+  if grep -Fq "Dafny program verifier finished" "$log"; then
+    grep -F "Dafny program verifier finished" "$log" | tail -n 1
+  else
+    grep -F "$expected" "$log" | tail -n 1
+  fi
 }
 
 stage_runtime_case() {
@@ -146,6 +151,20 @@ run_runtime_003() {
   [[ "$(grep -Fc 'generated:    (0, 1)' "$logs_dir/003-runtime.log")" -eq 2 ]]
 }
 
+run_runtime_012() {
+  if [[ $skip_runtime -eq 1 ]]; then
+    return 0
+  fi
+  local reference_rel="DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny2_MajorityVote.dfy"
+  local staged
+  staged="$(stage_runtime_case 012 case_012_majority_candidate "$reference_rel")"
+  run_ok "012-runtime" "Dafny program verifier finished with 5 verified, 0 errors" \
+    "$dafny_bin" run --cores "$dafny_cores" "$staged" -t:py
+  grep -Fq 'input:     [0, 1, 2]' "$logs_dir/012-runtime.log"
+  grep -Fq 'generated: 0' "$logs_dir/012-runtime.log"
+  grep -Fq 'reference: 2' "$logs_dir/012-runtime.log"
+}
+
 run_001() {
   local case_dir="$root/case_001_substring_occurrence"
   local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/AssertivePrograming_tmp_tmpwf43uz0e_Find_Substring.dfy"
@@ -187,6 +206,84 @@ run_005() {
   run_ok "005-combined" "Dafny program verifier finished with 26 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" --verify-included-files "$case_dir/comparison_harness.dfy"
 }
 
+run_006() {
+  local case_dir="$root/case_006_entry_selection"
+  local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/CS5232_Project_tmp_tmpai_cfrng_LFUSimple.dfy"
+  run_ok "006-reference" "Dafny program verifier finished with 8 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
+  run_ok "006-generated" "Dafny program verifier finished with 3 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
+  run_ok "006-combined" "Dafny program verifier finished with 15 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" --verify-included-files "$case_dir/comparison_harness.dfy"
+}
+
+run_007() {
+  local case_dir="$root/case_007_ordered_structure_extension"
+  local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/Dafny-Practice_tmp_tmphnmt4ovh_BST.dfy"
+  run_ok "007-reference" "Dafny program verifier finished with 14 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
+  run_ok "007-generated" "Dafny program verifier finished with 11 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
+  run_ok "007-combined" "Dafny program verifier finished with 38 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" --verify-included-files "$case_dir/comparison_harness.dfy"
+}
+
+run_008() {
+  local case_dir="$root/case_008_multiplicity_expansion"
+  local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/DafnyPrograms_tmp_tmp74_f9k_c_map-multiset-implementation.dfy"
+  run_ok "008-reference" "Dafny program verifier finished with 27 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
+  run_ok "008-generated" "Dafny program verifier finished with 4 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
+  run_ok "008-combined" "Dafny program verifier finished with 37 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" --verify-included-files "$case_dir/comparison_harness.dfy"
+}
+
+run_009() {
+  local case_dir="$root/case_009_local_array_repair"
+  local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_algorithms and leetcode_heap2.dfy"
+  run_ok "009-reference" "Dafny program verifier finished with 6 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
+  run_expected_fail "009-generated" "Dafny program verifier finished with 5 verified, 1 error" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
+}
+
+run_010() {
+  local case_dir="$root/case_010_in_place_chain_reversal"
+  local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny1_ListContents.dfy"
+  run_ok "010-reference" "Dafny program verifier finished with 10 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
+  run_expected_fail "010-generated" "17 resolution/type errors detected in generated_attempt_01.dfy" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
+}
+
+run_011() {
+  local case_dir="$root/case_011_queue_extension"
+  local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny1_Queue.dfy"
+  run_ok "011-reference" "Dafny program verifier finished with 18 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
+  run_ok "011-generated" "Dafny program verifier finished with 6 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
+  run_ok "011-combined" "Dafny program verifier finished with 35 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" --verify-included-files "$case_dir/comparison_harness.dfy"
+}
+
+run_012() {
+  local case_dir="$root/case_012_majority_candidate"
+  local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny2_MajorityVote.dfy"
+  run_ok "012-reference" "Dafny program verifier finished with 16 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
+  run_ok "012-generated" "Dafny program verifier finished with 7 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
+  run_ok "012-combined" "Dafny program verifier finished with 28 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" --verify-included-files "$case_dir/comparison_harness.dfy"
+  run_runtime_012
+}
+
+run_013() {
+  local case_dir="$root/case_013_undo_log_recovery"
+  local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_lightening_verifier.dfy"
+  run_ok "013-reference" "Dafny program verifier finished with 37 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
+  run_expected_fail "013-generated" "Dafny program verifier finished with 6 verified, 2 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
+}
+
+run_014() {
+  local case_dir="$root/case_014_distinct_window"
+  local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/dafleet_tmp_tmpa2e4kb9v_0001-0050_0003-longest-substring-without-repeating-characters.dfy"
+  run_ok "014-reference" "Dafny program verifier finished with 4 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
+  run_ok "014-generated" "Dafny program verifier finished with 4 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
+  run_ok "014-combined" "Dafny program verifier finished with 13 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" --verify-included-files "$case_dir/comparison_harness.dfy"
+}
+
+run_015() {
+  local case_dir="$root/case_015_parent_propagation"
+  local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/dafny-language-server_tmp_tmpkir0kenl_Test_vacid0_Composite.dfy"
+  run_ok "015-reference" "Dafny program verifier finished with 13 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
+  run_ok "015-generated" "Dafny program verifier finished with 4 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
+  run_ok "015-combined" "Dafny program verifier finished with 34 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" --verify-included-files "$case_dir/comparison_harness.dfy"
+}
+
 run_archive_771() {
   local case_dir="$root/archive/id771_segmented_weighted_sum"
   local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/veri-sparse_tmp_tmp15fywna6_dafny_spmv.dfy"
@@ -197,15 +294,13 @@ run_archive_771() {
 
 echo "== provenance checksums"
 (cd "$root" && sha256sum -c provenance/SHA256SUMS)
+(cd "$root" && sha256sum -c provenance/extension_freeze_SHA256SUMS)
+(cd "$root" && sha256sum -c provenance/extension_results_SHA256SUMS)
 
 echo "== heuristic forbidden-feature scan"
 forbidden='assume|\{:[[:space:]]*(verify[[:space:]]+false|axiom|extern)|decreases[[:space:]]+\*|(^|[^[:alnum:]_])print([[:space:](;]|$)'
 if grep -En "$forbidden" \
-  "$root/case_001_substring_occurrence/generated_attempt_01.dfy" \
-  "$root/case_002_local_transition_trace/generated_attempt_01.dfy" \
-  "$root/case_003_repeated_value_pair/generated_attempt_01.dfy" \
-  "$root/case_004_four_kind_arrangement/generated_attempt_01.dfy" \
-  "$root/case_005_tree_window/generated_attempt_01.dfy"; then
+  "$root"/case_???_*/generated_attempt_01.dfy; then
   echo "error: forbidden construct found" >&2
   exit 1
 fi
@@ -217,6 +312,16 @@ if [[ "$selected" == "all" ]]; then
   run_003
   run_004
   run_005
+  run_006
+  run_007
+  run_008
+  run_009
+  run_010
+  run_011
+  run_012
+  run_013
+  run_014
+  run_015
 else
   case "$selected" in
     001) run_001 ;;
@@ -224,6 +329,16 @@ else
     003) run_003 ;;
     004) run_004 ;;
     005) run_005 ;;
+    006) run_006 ;;
+    007) run_007 ;;
+    008) run_008 ;;
+    009) run_009 ;;
+    010) run_010 ;;
+    011) run_011 ;;
+    012) run_012 ;;
+    013) run_013 ;;
+    014) run_014 ;;
+    015) run_015 ;;
     archive-771) run_archive_771 ;;
   esac
 fi

@@ -1,0 +1,9 @@
+Before its final code response, the generation agent sent this progress message
+to the parent agent:
+
+Proposed verified-style body uses a shrinking `remaining := table.Keys` set and a quantified processed-key minimum invariant. Full source follows in my final; core proof includes explicit forall blocks for candidate replacement and remainder removal.
+
+This was an actual outbound-agent message and an extra non-code response. It
+violates the frozen zero-call/code-only isolation rule. The attempt is retained,
+is not replaced, and must not be counted as a protocol-conforming sample even
+if its subsequently returned Dafny source verifies.

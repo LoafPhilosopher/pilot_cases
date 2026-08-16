@@ -1,0 +1,55 @@
+Environment
+===========
+DafnyBench commit: 0cd28feed9cd0179b07fdb9d002f8c39063658e4
+Dafny version: 4.3.0
+Generation timestamp (UTC): 2026-08-16T09:04:20.488Z
+Generation model: gpt-5.6-sol
+Reasoning effort: ultra
+Generation attempts: 1
+Generation session: 01a009d0-97ff-7272-a727-dafba6a54ee5
+Calls before final response: Web 0; function 0; custom tool 0; outbound agent 1
+Protocol status: deviation (one outbound-agent progress call)
+Reference included in generation context: no
+Repair before first verification: none
+
+Commands below are run from case_006_entry_selection.
+
+Ground-truth verification (DafnyBench ID010)
+================================================
+Command:
+  taskset -c 0 ../../dafny verify ../third_party/DafnyBench/DafnyBench/dataset/ground_truth/CS5232_Project_tmp_tmpai_cfrng_LFUSimple.dfy --cores 1
+Result:
+  Dafny program verifier finished with 8 verified, 0 errors
+Notes:
+  The source emits deprecated-semicolon warnings and one warning for its
+  pre-existing `exists e :: A ==> B` quantifier form.
+
+Generated attempt 01 verification
+=================================
+Command:
+  taskset -c 0 ../../dafny verify generated_attempt_01.dfy --cores 1
+Result:
+  Dafny program verifier finished with 3 verified, 0 errors
+
+Combined relational verification
+================================
+Command:
+  taskset -c 0 ../../dafny verify --verify-included-files comparison_harness.dfy --cores 1
+Result:
+  Dafny program verifier finished with 15 verified, 0 errors
+Proved properties:
+  - both actual calls return a globally minimal key;
+  - a unique global minimum forces raw key equality;
+  - the concrete two-key tie admits two distinct minimal raw outputs.
+
+Anti-bypass scan of generated attempt 01
+========================================
+Checked for:
+  assume, {:verify false}, {:axiom}, {:extern}, decreases *
+Result:
+  no matches (ripgrep exit code 1 with empty output)
+
+Classification
+==============
+  PRIMARY RELATION PROVED-EQUIVALENT; RAW EQUALITY CONDITIONAL ON UNIQUENESS
+  PROTOCOL-DEVIATING: do not count as a conforming sample

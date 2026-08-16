@@ -1,0 +1,65 @@
+Case 012 equivalence analysis
+=============================
+
+Environment
+-----------
+DafnyBench commit: 0cd28feed9cd0179b07fdb9d002f8c39063658e4
+Dafny version: 4.3.0
+Generated-attempt SHA-256: 9ff9e8daaec0f438276f9027f7b332be2b5fe18eccb1a588eae37941e80210bb
+Reference-file SHA-256: 1d31d1d76157284fd04e9230f9818611c273efe2b2c90c5013a7a96f3028b57e
+
+All commands below were run locally from case_012_majority_candidate. No Web
+or network interface was used. CPU affinity and --cores 1 were used to respect
+the shared verifier thread limit.
+
+Pinned hidden-reference verification
+------------------------------------
+Command:
+  taskset -c 0 ../../dafny verify '../third_party/DafnyBench/DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny2_MajorityVote.dfy' --cores 1
+Exit code: 0
+Result:
+  Dafny program verifier finished with 16 verified, 0 errors
+
+Untouched generated-attempt verification
+----------------------------------------
+Command:
+  taskset -c 0 ../../dafny verify generated_attempt_01.dfy --cores 1
+Exit code: 0
+Result:
+  Dafny program verifier finished with 7 verified, 0 errors
+Warning:
+  generated_attempt_01.dfy(27,23): Warning: unusual indentation in right-hand
+  operand of ==> (which ends at line 28, column 59); do you perhaps need
+  parentheses?
+This is a parser indentation warning, not a verification error. The generated
+file was not edited in response.
+
+Combined relational verification
+--------------------------------
+Command:
+  taskset -c 0 ../../dafny verify comparison_harness.dfy --verify-included-files --cores 1
+Exit code: 0
+Result:
+  Dafny program verifier finished with 28 verified, 0 errors
+Proved property:
+  For every nonempty sequence with a strict majority designated under the true
+  ghost flag, both concrete method calls return the same designated value.
+
+Concrete execution
+------------------
+Command:
+  taskset -c 0 ../../dafny run --cores 1 comparison_harness.dfy -t:py
+Exit code: 0
+Output:
+  Dafny program verifier finished with 5 verified, 0 errors
+  input:     [0, 1, 2]
+  generated: 0
+  reference: 2
+
+The exact return values are runtime observations of the included concrete
+bodies. They are not facts proved from the false-flag public postconditions.
+
+Classification
+--------------
+  COUNTEREXAMPLE to universal raw-output equivalence.
+  PROVED-EQUIVALENT on the promised=true subdomain.

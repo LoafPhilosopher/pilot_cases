@@ -1,0 +1,59 @@
+Environment
+===========
+DafnyBench commit: 0cd28feed9cd0179b07fdb9d002f8c39063658e4
+Dafny version: 4.3.0
+Generation timestamp (UTC): 2026-08-16T09:04:33.419Z
+Generation model: gpt-5.6-sol
+Reasoning effort: ultra
+Generation attempts: 1
+Generation session: 01a009d0-ca83-7eb0-8311-3cacf83f6317
+Calls before final response: Web 0; function 0; custom tool 0; outbound agent 0
+Protocol status: conforming
+Reference included in generation context: no
+Repair before first verification: none
+
+Commands below are run from case_007_ordered_structure_extension.
+
+Ground-truth verification (DafnyBench ID107)
+================================================
+Command:
+  taskset -c 0 ../../dafny verify ../third_party/DafnyBench/DafnyBench/dataset/ground_truth/Dafny-Practice_tmp_tmphnmt4ovh_BST.dfy --cores 1
+Result:
+  Dafny program verifier finished with 14 verified, 0 errors
+Notes:
+  One warning reports a deprecated unnecessary semicolon.
+
+Generated attempt 01 verification
+=================================
+Command:
+  taskset -c 0 ../../dafny verify generated_attempt_01.dfy --cores 1
+Result:
+  Dafny program verifier finished with 11 verified, 0 errors
+
+Combined relational verification
+================================
+Command:
+  taskset -c 0 ../../dafny verify --verify-included-files comparison_harness.dfy --cores 1
+Result:
+  Dafny program verifier finished with 38 verified, 0 errors
+Proved properties:
+  - the actual calls agree under the structured value-set abstraction;
+  - the two executable-source projections produce identical raw shapes after
+    datatype alpha-renaming, for arbitrary trees and inserted integers;
+  - the public contract alone admits two distinct raw shapes for `{1, 2}`.
+Proof-boundary note:
+  Dafny checks both body-clone/projection equations and their unbounded
+  relation.  Projection-to-included-source correspondence is established by
+  direct inspection because Dafny does not automatically expose method bodies
+  as pure functions to callers.
+
+Anti-bypass scan of generated attempt 01
+========================================
+Checked for:
+  assume, {:verify false}, {:axiom}, {:extern}, decreases *
+Result:
+  no matches (ripgrep exit code 1 with empty output)
+
+Classification
+==============
+  PROVED-EQUIVALENT: RAW SHAPE (EXECUTABLE PROJECTION) AND ABSTRACT VALUE SET

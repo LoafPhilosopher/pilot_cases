@@ -1,0 +1,58 @@
+Case 011 equivalence analysis
+=============================
+
+Environment
+-----------
+DafnyBench commit: 0cd28feed9cd0179b07fdb9d002f8c39063658e4
+Dafny version: 4.3.0
+Generated-attempt SHA-256: 6b9f0f9d5e3a6988a775d8205223b5a798628a784f0e4330028366187cffaa48
+Reference-file SHA-256: 55e9bb47973f2ffcaa9d00dc4b2f29981efbefdaee832a1633d28723d7597f66
+
+All commands below were run locally from case_011_queue_extension. No Web or
+network interface was used. CPU affinity and --cores 1 were used to respect the
+shared verifier thread limit.
+
+Pinned hidden-reference verification
+------------------------------------
+Command:
+  taskset -c 0 ../../dafny verify '../third_party/DafnyBench/DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny1_Queue.dfy' --cores 1
+Exit code: 0
+Result:
+  Dafny program verifier finished with 18 verified, 0 errors
+
+Untouched generated-attempt verification
+----------------------------------------
+Command:
+  taskset -c 0 ../../dafny verify generated_attempt_01.dfy --cores 1
+Exit code: 0
+Result:
+  Dafny program verifier finished with 6 verified, 0 errors
+Warning:
+  generated_attempt_01.dfy(318,4): Warning: unusual indentation in body of
+  forall (which ends at line 323, column 60); do you perhaps need parentheses?
+This is a parser indentation warning, not a verification error. The generated
+file was not edited in response.
+
+Combined relational verification
+--------------------------------
+Command:
+  taskset -c 0 ../../dafny verify comparison_harness.dfy --verify-included-files --cores 1
+Exit code: 0
+Result:
+  Dafny program verifier finished with 35 verified, 0 errors
+Proved property:
+  FrozenObservationsAgree equates the complete normalized post-state, existing
+  pointer-write set, and fresh-object set for arbitrary complete pre-states,
+  arbitrary appended values, and arbitrary fresh identities.
+
+Classification
+--------------
+  PROVED-EQUIVALENT under every frozen observation, modulo a fresh-object
+  bijection that fixes all pre-existing objects.
+
+Proof boundary
+--------------
+  Dafny proves equality of the normalized transition summaries and verifies
+  both included implementations. Statement-by-statement correspondence between
+  each summary field and the imperative source assignments is source-audited;
+  the heap methods are not automatically inlined into the algebraic theorem.

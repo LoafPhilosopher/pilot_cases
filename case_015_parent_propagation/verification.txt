@@ -1,0 +1,41 @@
+Case 015 verification and comparison record
+Date: 2026-08-16
+Verifier: Dafny 4.3.0
+Network/Web used during verification and comparison: no
+
+Generated-attempt gate
+Command (from pilot_cases/):
+  taskset -c 0 ../dafny verify case_015_parent_propagation/generated_attempt_01.dfy --cores 1
+Exit code: 0
+Exact verifier output:
+
+Dafny program verifier finished with 4 verified, 0 errors
+
+Hidden-reference check
+Command (from pilot_cases/):
+  taskset -c 0 ../dafny verify third_party/DafnyBench/DafnyBench/dataset/ground_truth/dafny-language-server_tmp_tmpkir0kenl_Test_vacid0_Composite.dfy --cores 1
+Exit code: 0
+Exact verifier output:
+
+Dafny program verifier finished with 13 verified, 0 errors
+
+Relational/effect harness
+Command (from pilot_cases/):
+  taskset -c 0 ../dafny verify case_015_parent_propagation/comparison_harness.dfy --verify-included-files --cores 1
+Exit code: 0
+Exact verifier output:
+
+Dafny program verifier finished with 34 verified, 0 errors
+
+The relational/effect harness declarations alone account for 17 verified,
+0 errors; the combined command above also verifies both included sources.
+
+Interpretation:
+- actual calls: machine-proved preservation of paired topology/payload and
+  satisfaction of both validity predicates over the full input domain;
+- abstract relation: machine-proved correspondence of arbitrary finite upward
+  paths and preservation of every aggregate under matching path effects;
+- body-to-effect bridge: established by inspection of the retained loop and
+  recursion, because the original public contracts do not expose a per-node
+  effect postcondition;
+- raw object identity: intentionally outside the frozen observation relation.

@@ -14,14 +14,22 @@ The script:
 1. downloads the official Dafny 4.3.0 Ubuntu 20.04 x64 archive;
 2. verifies its SHA-256 digest;
 3. checks out DafnyBench at the exact recorded commit;
-4. verifies the public generation-artifact checksums and reruns the recorded
-   heuristic text scan for forbidden constructs;
-5. reruns every reference, generated attempt, and post-gate comparison; and
-6. executes the concrete counterexamples for cases 001 and 003.
+4. verifies the pilot, extension-freeze, and extension-result artifact
+   checksums and reruns the recorded heuristic text scan for forbidden
+   constructs;
+5. reruns every reference, all 15 generated attempts, and each available
+   post-gate comparison; and
+6. executes the concrete counterexamples for cases 001, 003, and 012.
 
-Case 002 is a recorded verifier-fail attempt. Reproduction succeeds only when
-it still yields `3 verified, 2 errors`; the script does not repair or silently
-drop it.
+Cases 002, 009, 010, and 013 are recorded failures. Reproduction succeeds only
+when their saved first attempts reproduce the recorded diagnostics: Case 002
+has `3 verified, 2 errors`, Case 009 has `5 verified, 1 error`, Case 010 has 17
+resolution/type errors, and Case 013 has `6 verified, 2 errors`. The script
+does not repair or silently drop them.
+
+Case 006 verifies, but its generation log records one prohibited outbound
+progress call before the final code response. Reproduction checks the Dafny
+artifact; it does not turn that attempt into a protocol-conforming sample.
 
 ## Pinned inputs
 
@@ -35,20 +43,20 @@ drop it.
   `0cd28feed9cd0179b07fdb9d002f8c39063658e4`
 
 Automatic setup requires `bash`, `curl`, `git`, `unzip`, and `sha256sum`.
-Python 3 is required for the two runtime counterexamples. Downloaded
+Python 3 is required for the three runtime counterexamples. Downloaded
 dependencies are stored in ignored directories `.tools/` and
 `third_party/`; each reproduction run receives a new timestamped directory
 under `.repro/runs/`.
 
 ## Options
 
-Run one active case:
+Run one active case (001 through 015):
 
 ```bash
 ./reproduce.sh --case 004
 ```
 
-Skip the two runtime counterexamples while retaining all formal verification:
+Skip the three runtime counterexamples while retaining all formal verification:
 
 ```bash
 ./reproduce.sh --skip-runtime

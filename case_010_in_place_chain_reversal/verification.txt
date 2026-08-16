@@ -1,0 +1,20 @@
+Experiment status: first and only generation attempt; no repair or retry.
+Model: gpt-5.6-sol
+Reasoning effort: ultra
+Session: 01a009d7-a585-7ed3-b92e-ee62f90bda92
+Calls before final response: 0
+Raw response: 4385 bytes
+Raw response SHA-256: 44fea59dc237335a2d92663cead7acaed9aac2101064a7b0e967952553611ec2
+Saved artifact normalization: one final LF appended
+
+Command, from the repository parent directory:
+  taskset -c 0 ./dafny verify pilot_cases/case_010_in_place_chain_reversal/generated_attempt_01.dfy --cores 1
+
+Exit code: 2
+
+The candidate uses `.Length` on Dafny sequences at lines 53--66. In Dafny
+4.3.0, sequence length is written `|sequence|`; a sequence has no `.Length`
+member. Dafny reports 17 resolution/type errors and does not enter
+verification. The complete diagnostics are reproducible with the command above.
+
+Summary: 17 resolution/type errors detected in generated_attempt_01.dfy

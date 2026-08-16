@@ -1,17 +1,21 @@
-# Dafny equivalence study: five-case pilot and frozen ten-case extension
+# Dafny equivalence study: five-case pilot and ten-case extension
 
 ## Status
 
 This repository contains a technically checked **five-case preliminary
-feasibility pilot** and a ten-case prospective extension. It is not a new
-benchmark or a modification of DafnyBench's official evaluation.
+feasibility pilot** and a completed, prospectively frozen **ten-case
+extension**. It is not a new benchmark or a modification of DafnyBench's
+official evaluation.
 
 On 2026-08-16, the researcher reported advisor approval of the 15-task plan.
 The ten extension inputs, prompts, one-sample rule, and observation relations
-were then frozen before any extension output was requested. They are listed in
+were frozen at commit
+`8b6218c8cc8d235adf24f3c9832a4d70de302983` before any extension output was
+requested. The immutable pre-generation snapshot is listed in
 [`SHORTLIST.md`](SHORTLIST.md), with the prospective procedure in
-[`EXTENSION_PROTOCOL.md`](EXTENSION_PROTOCOL.md). At this freeze point, the
-ten extension tasks remain unrun.
+[`EXTENSION_PROTOCOL.md`](EXTENSION_PROTOCOL.md). All ten frozen first
+attempts have now been run without retries, repairs, or replacements; their
+outcomes are reported in [`EXTENSION_RESULTS.md`](EXTENSION_RESULTS.md).
 
 The active five-case set was not preregistered. An initial ID771 run was
 replaced after its executable specification made synthesis too direct. That
@@ -19,19 +23,25 @@ run remains visible in [`archive/id771_segmented_weighted_sum/`](archive/id771_s
 but it is not counted as an active sixth case. This post-generation replacement
 means the pilot must not be used for aggregate performance claims.
 
-## What the pilot examined
+## What the study examined
 
 Each case asks what can be concluded about behavioral equivalence when a
 Coding Agent sees a method interface, contract, and necessary context, but not
-the benchmark's reference body. The five active tasks cover nested search,
+the benchmark's reference body. The five pilot tasks cover nested search,
 higher-order trace construction, witness selection, datatype arrangement, and
 interval extraction over a heap-allocated tree. They were chosen for
 programming non-triviality and mechanism diversity, not for simple outputs or
 pre-labelled “strong/weak” specifications.
 
+The prospective extension adds finite-map minimization, ordered recursive
+structures, multiset expansion, array repair, destructive linked structures,
+queue mutation, majority selection, undo-log recovery, distinct-window
+optimization, and recursive heap propagation. Its task set and comparison
+relations were fixed before outputs were observed.
+
 ## Procedure actually used
 
-For each active task:
+For each task:
 
 1. The implementation at pinned DafnyBench commit
    `0cd28feed9cd0179b07fdb9d002f8c39063658e4` was retained as a hidden
@@ -40,26 +50,38 @@ For each active task:
    solutions, and algorithm-revealing names were removed. The model received
    the neutrally renamed target header, its original contract, and the minimum
    definitions needed to understand and verify it.
-3. One isolated `gpt-5.6-sol` generation was instructed not to browse or search
+3. One fresh-context `gpt-5.6-sol` generation was instructed not to browse or search
    the Web, call tools, inspect the filesystem, contact other agents, or access
    the hidden reference.
 4. The first response was preserved without repair and checked with Dafny
    4.3.0.
 5. Only a verifier-pass candidate entered equivalence analysis. The comparison
-   used a concrete counterexample or a machine-checked relational theorem and
-   stated the relevant observation relation.
+   sought a concrete counterexample or machine-checked relational theorem,
+   stated the relevant observation relation, and disclosed any remaining
+   code-inspection or undetermined boundary.
 
-Across the active set there were **5 generation attempts; equivalence analysis
+Across the pilot there were **5 generation attempts; equivalence analysis
 was performed for the 4 verifier-pass attempts.** The remaining attempt is
 retained as a verifier-fail result, not treated as an equivalence case.
 
+The extension independently froze **10 first attempts**. Seven passed the
+verifier and therefore entered comparison; three failed and stopped at the
+gate. One of the seven pass attempts (Case 006) made a prohibited outbound
+progress call before its final code response. It remains visible as a
+protocol-deviating result and was not replaced. The extension therefore also
+has a separate protocol-conforming denominator: **9 conforming attempts, of
+which 6 passed verification**.
+
 The prompt-level prohibition was audited against the locally retained
-structured logs: there were zero tool, Web, filesystem, or outbound-agent
-calls before the first saved response in each active case. Tools existed in the
-execution environment, so this is evidence of zero actual use, not
-capability-level removal. See [`provenance/manifest.json`](provenance/manifest.json)
-for model settings, generation-artifact hashes, raw-response hashes, and
-limitations.
+structured logs. The five pilot cases and nine of ten extension cases had zero
+tool, Web, filesystem, or outbound-agent calls before the saved response;
+Case 006 had the disclosed outbound progress call. Tools existed in the
+execution environment, so these are actual-use observations, not
+capability-level removal. See
+[`provenance/manifest.json`](provenance/manifest.json) and
+[`provenance/extension_manifest.json`](provenance/extension_manifest.json)
+for model settings, generation-artifact hashes, raw-response hashes, exact
+denominators, and limitations.
 
 ## Preliminary pilot results
 
@@ -77,21 +99,45 @@ open witness choices; cases 004 and 005 show that different implementations
 can be related for all inputs when the specified observation is uniquely
 determined.
 
+## Prospective extension results
+
+The frozen extension produced **10 first attempts: 7 verifier-pass and 3
+verifier/resolution failures**. One pass attempt, Case 006, violated the
+zero-outbound-call rule and is retained separately; among the **9 conforming
+attempts, 6 passed verification**.
+
+| Case | First attempt | Post-gate result |
+|---|---|---|
+| [006](case_006_entry_selection/REPORT.md) | `3 verified, 0 errors`; protocol-deviating | Minimum-entry relation proved; raw key equality requires a unique minimum. |
+| [007](case_007_ordered_structure_extension/REPORT.md) | `11 verified, 0 errors` | Abstract sets agree on actual calls; raw shape agrees through a proved executable projection with a disclosed source-audit bridge. |
+| [008](case_008_multiplicity_expansion/REPORT.md) | `4 verified, 0 errors` | Multisets agree; raw sequence order has a permutation counterexample. |
+| [009](case_009_local_array_repair/REPORT.md) | `5 verified, 1 error` | Gate not entered. |
+| [010](case_010_in_place_chain_reversal/REPORT.md) | 17 resolution/type errors | Gate not entered. |
+| [011](case_011_queue_extension/REPORT.md) | `6 verified, 0 errors` | Full normalized queue transition agrees, with a disclosed source-audit bridge. |
+| [012](case_012_majority_candidate/REPORT.md) | `7 verified, 0 errors` | Proved equal with a true promise; concrete raw-output counterexample when false. |
+| [013](case_013_undo_log_recovery/REPORT.md) | `6 verified, 2 errors` | Gate not entered. |
+| [014](case_014_distinct_window/REPORT.md) | `4 verified, 0 errors` | Maximum length proved equal; ghost endpoints require a unique maximizer. |
+| [015](case_015_parent_propagation/REPORT.md) | `4 verified, 0 errors` | Full abstract heap effect agrees, with a disclosed inspected-body bridge. |
+
+The findings-first account and exact evidence boundaries are in
+[`EXTENSION_RESULTS.md`](EXTENSION_RESULTS.md).
+
 ## Reproduce
 
 On a glibc-based Linux x86-64 system compatible with the official Ubuntu 20.04
 package, the following command downloads and verifies Dafny 4.3.0, checks out
-the exact DafnyBench commit, and reproduces all five active cases:
+the exact DafnyBench commit, and reproduces all 15 cases:
 
 ```bash
 ./reproduce.sh
 ```
 
-Case 002 is expected to report `3 verified, 2 errors`; the script checks that
-this recorded failure is reproduced rather than treating it as a script
-failure. Detailed requirements, per-case commands, offline overrides, and the
-archived ID771 option are in [`REPRODUCING.md`](REPRODUCING.md). Each run's
-logs are written under an ignored timestamped directory in `.repro/runs/`.
+Cases 002, 009, 010, and 013 are recorded verifier/resolution failures; the
+script checks that each failure is reproduced instead of repairing or silently
+dropping it. Detailed requirements, per-case commands, offline overrides, and
+the archived ID771 option are in [`REPRODUCING.md`](REPRODUCING.md). Each
+run's logs are written under an ignored timestamped directory in
+`.repro/runs/`.
 
 ## Evidence boundaries
 
@@ -103,6 +149,9 @@ logs are written under an ignored timestamped directory in `.repro/runs/`.
   related material was absent from model training.
 - The five tasks, one model, one sample per task, and the post-generation ID771
   replacement make this a mechanism-discovery pilot, not a pass-rate estimate.
+- The extension was prospectively frozen, but ten tasks and one sample per task
+  are still too small to support broad model-performance claims. Its raw counts
+  are reported with the protocol-deviating Case 006 separated.
 - Complete Codex JSONL logs are retained locally but not published because they
   contain platform instructions, encrypted reasoning, local paths, and later
   analysis turns. Public hashes anchor those logs for possible controlled
@@ -113,9 +162,10 @@ logs are written under an ignored timestamped directory in `.repro/runs/`.
 
 ## Repository layout
 
-- `SHORTLIST.md`: advisor-facing 15-task candidate list; ten candidates remain
-  unrun
+- `SHORTLIST.md`: immutable advisor-facing shortlist and pre-generation status
+  snapshot; later outcomes are in `EXTENSION_RESULTS.md`
 - `case_001_*` through `case_005_*`: five active pilot cases
+- `case_006_*` through `case_015_*`: ten prospectively frozen extension cases
 - `archive/`: disclosed, excluded pilot material
 - `input_masked.dfy`: exact source skeleton exposed for generation
 - `PROMPT.md`: recorded generation instruction and source
@@ -123,5 +173,5 @@ logs are written under an ignored timestamped directory in `.repro/runs/`.
 - `verification.txt`: historical environment and verifier record
 - `REPORT.md`: generation outcome and, after the verifier gate, comparison
 - `comparison_harness.dfy`: relational proof or executable counterexample
-- `provenance/manifest.json` and `provenance/SHA256SUMS`: generation metadata
-  and integrity anchors
+- `provenance/`: separate pilot and extension manifests, immutable freeze
+  checksums, and public result-artifact integrity anchors

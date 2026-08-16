@@ -1,0 +1,57 @@
+Environment
+===========
+DafnyBench commit: 0cd28feed9cd0179b07fdb9d002f8c39063658e4
+Dafny version: 4.3.0
+Generation timestamp (UTC): 2026-08-16T09:04:46.625Z
+Generation model: gpt-5.6-sol
+Reasoning effort: ultra
+Generation attempts: 1
+Generation session: 01a009d0-fe18-7282-ba8a-da7cc5adb8e8
+Calls before final response: Web 0; function 0; custom tool 0; outbound agent 0
+Protocol status: conforming
+Reference included in generation context: no
+Repair before first verification: none
+
+Commands below are run from case_008_multiplicity_expansion.
+
+Ground-truth verification (DafnyBench ID119)
+================================================
+Command:
+  taskset -c 0 ../../dafny verify ../third_party/DafnyBench/DafnyBench/dataset/ground_truth/DafnyPrograms_tmp_tmp74_f9k_c_map-multiset-implementation.dfy --cores 1
+Result:
+  Dafny program verifier finished with 27 verified, 0 errors
+Notes:
+  Two warnings report deprecated unnecessary semicolons.
+
+Generated attempt 01 verification
+=================================
+Command:
+  taskset -c 0 ../../dafny verify generated_attempt_01.dfy --cores 1
+Result:
+  Dafny program verifier finished with 4 verified, 0 errors
+
+Combined relational verification
+================================
+Command:
+  taskset -c 0 ../../dafny verify --verify-included-files comparison_harness.dfy --cores 1
+Result:
+  Dafny program verifier finished with 37 verified, 0 errors
+Proved properties:
+  - actual reference and generated calls return equal multisets for arbitrary
+    permitted count maps;
+  - `[1, 2]` and `[2, 1]` are unequal raw results that both satisfy every
+    frozen return postcondition for `map[1 := 1, 2 := 1]`.
+Notes:
+  The harness adds one harmless unusual-indentation warning for a `forall`
+  body, in addition to the reference's two semicolon warnings.
+
+Anti-bypass scan of generated attempt 01
+========================================
+Checked for:
+  assume, {:verify false}, {:axiom}, {:extern}, decreases *
+Result:
+  no matches (ripgrep exit code 1 with empty output)
+
+Classification
+==============
+  PRIMARY MULTISET PROVED-EQUIVALENT; RAW SEQUENCE HAS A CONCRETE COUNTEREXAMPLE

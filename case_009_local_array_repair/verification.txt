@@ -1,0 +1,24 @@
+Experiment status: first and only generation attempt; no repair or retry.
+Model: gpt-5.6-sol
+Reasoning effort: ultra
+Session: 01a009d7-6ee1-77d3-b2d3-b41b25c0ad0f
+Calls before final response: 0
+Raw response: 2528 bytes
+Raw response SHA-256: 6f4ccdc1ee59485999c278adbb2439e1afd53c76ca4022add30008f6c45caa82
+Saved artifact normalization: one final LF appended
+
+Command, from the repository parent directory:
+  taskset -c 0 ./dafny verify pilot_cases/case_009_local_array_repair/generated_attempt_01.dfy --cores 1
+
+Exit code: 4
+
+case_009_local_array_repair/generated_attempt_01.dfy(51,15): Error: assignment might update an array element not in the enclosing context's modifies clause
+   |
+51 |       this.data[i] := 0;
+   |                ^
+
+Dafny program verifier finished with 5 verified, 1 error
+
+The first verification used the same Dafny 4.3.0 binary without taskset and
+reported the identical Dafny diagnostic and count. CPU pinning is only a local
+resource control for the shared process/thread limit; it does not alter source.
