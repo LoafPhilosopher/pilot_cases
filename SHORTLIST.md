@@ -1,21 +1,24 @@
-# Candidate shortlist for the next Dafny study
+# Approved 15-task shortlist for the Dafny study
 
 ## Purpose and timing
 
-This is a 15-task candidate list drawn from DafnyBench commit
-`0cd28feed9cd0179b07fdb9d002f8c39063658e4`. It is the next item to send for
-advisor review; it is not a new benchmark or a modification of DafnyBench.
-It was prepared on 2026-08-14, after the five-case feasibility pilot.
+This is a 15-task list drawn from DafnyBench commit
+`0cd28feed9cd0179b07fdb9d002f8c39063658e4`; it is not a new benchmark or a
+modification of DafnyBench. The shortlist was prepared on 2026-08-14 after the
+five-case feasibility pilot. On 2026-08-16, the researcher reported advisor
+approval to proceed, and the ten extension inputs and run conditions were
+frozen before generation in `EXTENSION_PROTOCOL.md` and the corresponding case
+directories.
 
-The five entries marked **existing pilot** had already been run when this
-shortlist was written. This document therefore does not claim to have
-preregistered those runs. The other ten entries are **proposed and unrun**:
-no generation experiment has been performed on them, and none should be run
-until the final subset and run conditions have been reviewed and frozen.
+The five entries marked **existing pilot** had already been run when the
+shortlist was written, so this document does not claim to have preregistered
+those runs. The other ten entries are **approved, frozen, and unrun** at this
+commit. They use exactly one first response per task, with no outcome-dependent
+retry, repair, or replacement.
 
 Paths below are relative to the upstream DafnyBench repository. The standalone
 reproduction checkout places that repository at `third_party/DafnyBench/`.
-For each proposed task, every visible class, datatype, field, predicate,
+For each extension task, every visible class, datatype, field, predicate,
 function, lemma, and method name will receive a frozen neutral alias where
 needed; “keep” below means retain the definition or contract under those
 aliases, not retain an identifying declaration name.
@@ -47,7 +50,7 @@ was run for that check.
 
 ### 2. ID010 — least-frequency entry selection
 
-- **Status:** proposed and unrun
+- **Status:** approved, frozen, and unrun
 - **Ground truth:** `DafnyBench/dataset/ground_truth/CS5232_Project_tmp_tmpai_cfrng_LFUSimple.dfy`
 - **Target:** `LFUCache.getLFUKey`; proposed masked name `ChooseEntry`
 - **Why non-trivial:** The method must choose an entry with globally minimal
@@ -60,7 +63,7 @@ was run for that check.
 
 ### 3. ID107 — insertion into an ordered tree
 
-- **Status:** proposed and unrun
+- **Status:** approved, frozen, and unrun
 - **Ground truth:** `DafnyBench/dataset/ground_truth/Dafny-Practice_tmp_tmphnmt4ovh_BST.dfy`
 - **Target:** `InsertBST`; proposed masked name `ExtendStructure`
 - **Why non-trivial:** The method recursively constructs a datatype tree while
@@ -86,7 +89,7 @@ was run for that check.
 
 ### 5. ID119 — expansion of a finite multiplicity map
 
-- **Status:** proposed and unrun
+- **Status:** approved, frozen, and unrun
 - **Ground truth:** `DafnyBench/dataset/ground_truth/DafnyPrograms_tmp_tmp74_f9k_c_map-multiset-implementation.dfy`
 - **Target:** `Map2Seq`; proposed masked name `ExpandRepresentation`
 - **Why non-trivial:** The method traverses a finite key set and expands each
@@ -101,7 +104,7 @@ was run for that check.
 
 ### 6. ID288 — local repair of an array-backed heap
 
-- **Status:** proposed and unrun
+- **Status:** approved, frozen, and unrun
 - **Ground truth:** `DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_algorithms and leetcode_heap2.dfy`
 - **Target:** `heapify`; proposed masked name `RepairAt`
 - **Why non-trivial:** The method mutates an array-backed binary tree, chooses
@@ -109,12 +112,13 @@ was run for that check.
   the next location needing repair. Mutation and quantified parent/child
   obligations make this more than a scalar-return task.
 - **Context/risk:** Keep the representation fields, `parent`, `IsMaxHeap`, and
-  `IsAlmostMaxHeap`. Compare both the mutated array and returned index; do not
-  silently add conventional heap properties absent from the frozen contract.
+  `IsAlmostMaxHeap`. Compare the mutated contents, returned index, and whether
+  the public field still aliases the caller's original array; do not silently
+  add conventional heap properties absent from the frozen contract.
 
 ### 7. ID308 — in-place reversal of a heap-allocated list
 
-- **Status:** proposed and unrun
+- **Status:** approved, frozen, and unrun
 - **Ground truth:** `DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny1_ListContents.dfy`
 - **Target:** `ReverseInPlace`; proposed masked name `Rewire`
 - **Why non-trivial:** The method destructively reverses a linked structure
@@ -126,7 +130,7 @@ was run for that check.
 
 ### 8. ID309 — append to a dynamically framed queue
 
-- **Status:** proposed and unrun
+- **Status:** approved, frozen, and unrun
 - **Ground truth:** `DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny1_Queue.dfy`
 - **Target:** `Enqueue`; proposed masked name `UpdateStructure`
 - **Why non-trivial:** Appending one logical element requires allocation,
@@ -150,7 +154,7 @@ was run for that check.
 
 ### 10. ID313 — majority-candidate search
 
-- **Status:** proposed and unrun
+- **Status:** approved, frozen, and unrun
 - **Ground truth:** `DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny2_MajorityVote.dfy`
 - **Target:** `SearchForWinner`; proposed masked name `SelectCandidate`
 - **Why non-trivial:** The executable search maintains a candidate and counter
@@ -163,7 +167,7 @@ was run for that check.
 
 ### 11. ID327 — recovery from a mutation log
 
-- **Status:** proposed and unrun
+- **Status:** approved, frozen, and unrun
 - **Ground truth:** `DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_lightening_verifier.dfy`
 - **Target:** `UndoLog.recover`; proposed masked name `RestoreState`
 - **Why non-trivial:** Recovery replays an undo log backwards into a mutable
@@ -171,14 +175,20 @@ was run for that check.
   indices and writes to a ghost recovery function while preserving several
   representation invariants.
 - **Context/risk:** Keep only the record types, arrays, ghost-state functions,
-  invariant predicates, and lemma interfaces required by the target contract.
-  Remove transaction clients, write operations, crash theorem, source prose,
-  and original names. Context extraction is larger than for most candidates
-  and must be frozen before generation.
+  invariant predicates, and declarations required by the target contract.
+  Before generation, normalize the source's recursive executable transition
+  into a bodyless ghost final-state relation: entry count is zero, current
+  values equal the baseline, and the other six state fields are unchanged.
+  This preserves the transition's denotation without exposing its reverse
+  traversal blueprint or an executable oracle. Remove transaction clients,
+  write operations, crash theorem, source prose, and original names. Full
+  comparison must also require each run to retain its original `records` and
+  `values` array references so caller-held aliases observe the same mutations;
+  value-only state equality is a separately reported weaker relation.
 
 ### 12. ID417 — maximum distinct-character window
 
-- **Status:** proposed and unrun
+- **Status:** approved, frozen, and unrun
 - **Ground truth:** `DafnyBench/dataset/ground_truth/dafleet_tmp_tmpa2e4kb9v_0001-0050_0003-longest-substring-without-repeating-characters.dfy`
 - **Target:** `method lengthOfLongestSubstring(s: string) returns (n: int,
   ghost best_iv: interval)`; proposed masked name `SelectDistinctWindow`
@@ -194,7 +204,7 @@ was run for that check.
 
 ### 13. ID482 — propagation through a parent-linked structure
 
-- **Status:** proposed and unrun
+- **Status:** approved, frozen, and unrun
 - **Ground truth:** `DafnyBench/dataset/ground_truth/dafny-language-server_tmp_tmpkir0kenl_Test_vacid0_Composite.dfy`
 - **Target:** `Composite.Adjust`; proposed masked name `PropagateUpdate`
 - **Why non-trivial:** The method walks a parent chain while propagating an
@@ -231,10 +241,11 @@ was run for that check.
   predicate, and contract; remove exercise comments, tests, and identifying
   names. Freeze helper availability before generation.
 
-## Decisions to freeze before any of the ten proposed runs
+## Decisions frozen before the ten extension runs
 
-The following are proposed controls for advisor review. They are not described
-as having governed the already-completed five-case pilot.
+The following controls were frozen on 2026-08-16 before any extension output.
+They are not described as having governed the already-completed five-case
+pilot.
 
 1. Confirm the final task subset using only source-level exclusion reasons.
    Exclude a task if a self-contained body hole cannot be made without exposing
@@ -242,9 +253,9 @@ as having governed the already-completed five-case pilot.
    executable specification directly computes the target and makes generation
    mechanically trivial.
 2. Use one designated target body hole and one masked condition per task.
-   Decide the number of independent samples before running any task. Run
-   exactly that many samples regardless of verifier outcome; do not add retries
-   after failures or stop early after a pass.
+   Run exactly one independent first sample per extension task regardless of
+   verifier outcome; do not add retries after failures or stop early after a
+   pass.
 3. Freeze every visible datatype, predicate, function, lemma body, and helper
    interface. Do not expand context after observing a response.
 4. Remove original paths, repository names, attribution comments, examples,
@@ -256,10 +267,11 @@ as having governed the already-completed five-case pilot.
 6. Before viewing a generated output, state the task-specific observation
    relation to be compared (for example raw tuple, abstract sequence, heap
    contents, or result modulo constructor renaming).
-7. Disable Web/search capability for generation rather than relying only on a
-   prompt prohibition. Do not expose the benchmark checkout or hidden
-   reference through filesystem or tool context; if the platform cannot enforce
-   this boundary, disclose that limitation before running.
+7. Supply no benchmark checkout or hidden reference in the generation context.
+   Explicitly prohibit Web, network, tool, filesystem, and other-agent use and
+   audit the pre-response log for zero actual calls. The platform cannot remove
+   tool capability at the interface level; this limitation was disclosed
+   before running and is retained in the evidence record.
 8. Record the prompt artifact, masked input, model configuration, response
    hash, verifier log, and tool-use boundary. Only verifier-pass attempts
    proceed to equivalence analysis.

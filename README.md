@@ -1,17 +1,17 @@
-# Five-case preliminary feasibility pilot: generated Dafny programs and hidden references
+# Dafny equivalence study: five-case pilot and frozen ten-case extension
 
 ## Status
 
 This repository contains a technically checked **five-case preliminary
-feasibility pilot**. It is not the requested 10–20-task study, a new benchmark,
-or a modification of DafnyBench's official evaluation, and it should not be
-presented as completion of Jocelyn's current request.
+feasibility pilot** and a ten-case prospective extension. It is not a new
+benchmark or a modification of DafnyBench's official evaluation.
 
-The next advisor-facing artifact is [`SHORTLIST.md`](SHORTLIST.md): 15
-DafnyBench candidates with short, source-based reasons for their programming
-difficulty. Five are the already-run pilot cases and ten are proposed
-extensions. No generation has been run on those ten candidates; they should be
-reviewed and frozen before any further experiment.
+On 2026-08-16, the researcher reported advisor approval of the 15-task plan.
+The ten extension inputs, prompts, one-sample rule, and observation relations
+were then frozen before any extension output was requested. They are listed in
+[`SHORTLIST.md`](SHORTLIST.md), with the prospective procedure in
+[`EXTENSION_PROTOCOL.md`](EXTENSION_PROTOCOL.md). At this freeze point, the
+ten extension tasks remain unrun.
 
 The active five-case set was not preregistered. An initial ID771 run was
 replaced after its executable specification made synthesis too direct. That
