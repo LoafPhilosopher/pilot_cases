@@ -1,205 +1,95 @@
-# Dafny equivalence study: five-case pilot and ten-case extension
+# Comparing generated Dafny programs with the originals on 15 tasks
 
-## Status
+This repository contains a preliminary study of 15 non-trivial programs from
+DafnyBench. It asks two questions: can a coding model implement a method from
+its Dafny specification, and, when the generated program verifies, does it do
+the same thing as the original program?
 
-This repository contains a technically checked **five-case preliminary
-feasibility pilot** and a completed, prospectively frozen **ten-case
-extension**. It is not a new benchmark or a modification of DafnyBench's
-official evaluation.
+This is a collection of case studies, not a new benchmark or a model
+leaderboard. Each linked report below explains its problem and result without
+requiring the reader to open the Dafny source files.
 
-For the current study scope, evidence boundaries, and case-level exceptions,
-read [`STUDY_SCOPE.md`](STUDY_SCOPE.md) first. The remaining files preserve the
-more detailed technical record.
+## How the study was run
 
-The task count and selection rationale follow advisor guidance to study 10–20
-non-trivial programming tasks. The exact ten-task extension list was selected
-by the researcher and frozen before generation; see
-[`STUDY_SCOPE.md`](STUDY_SCOPE.md).
+For each task, the original method body was withheld. The model saw a neutrally
+renamed method header, its preconditions and postconditions, and the definitions
+needed to verify a new body. It was instructed not to browse the Web, use tools,
+or inspect files. We saved its first answer without repairing it and checked it
+with Dafny 4.3.0. If that answer passed, we then compared it with the original
+method using a Dafny proof, a concrete counterexample, and, where Dafny could
+not connect two imperative bodies automatically, a stated inspection of those
+bodies.
 
-The ten extension inputs, prompts, one-sample rule, and observation relations
-were frozen at commit
-`8b6218c8cc8d235adf24f3c9832a4d70de302983` before any extension output was
-requested. The immutable pre-generation snapshot is listed in
-[`SHORTLIST.md`](SHORTLIST.md), with the prospective procedure in
-[`EXTENSION_PROTOCOL.md`](EXTENSION_PROTOCOL.md). All ten frozen first
-attempts have now been run without retries, repairs, or replacements; their
-outcomes are reported in [`EXTENSION_RESULTS.md`](EXTENSION_RESULTS.md).
+The first five tasks were an exploratory pilot. The next ten tasks were chosen
+before their generations were run, with one `gpt-5.6-sol` answer per task. In
+total, 11 of the 15 generated programs passed Dafny; the other four are kept as
+failures and were not compared semantically.
 
-`SHORTLIST.md` and `EXTENSION_PROTOCOL.md` are preserved historical
-pre-generation artifacts. Current scope and interpretation are stated in
-`STUDY_SCOPE.md`.
+## Results
 
-The active five-case set was not preregistered. An initial ID771 run was
-replaced after its executable specification made synthesis too direct. That
-run remains visible in [`archive/id771_segmented_weighted_sum/`](archive/id771_segmented_weighted_sum/),
-but it is not counted as an active sixth case. This post-generation replacement
-means the pilot must not be used for aggregate performance claims.
-
-## What the study examined
-
-Each case asks what can be concluded about behavioral equivalence when a
-Coding Agent sees a method interface, contract, and necessary context, but not
-the benchmark's reference body. The five pilot tasks cover nested search,
-higher-order trace construction, witness selection, datatype arrangement, and
-interval extraction over a heap-allocated tree. They were chosen for
-programming non-triviality and mechanism diversity, not for simple outputs or
-pre-labelled “strong/weak” specifications.
-
-The prospective extension adds finite-map minimization, ordered recursive
-structures, multiset expansion, array repair, destructive linked structures,
-queue mutation, majority selection, undo-log recovery, distinct-window
-optimization, and recursive heap propagation. Its task set and comparison
-relations were fixed before outputs were observed.
-
-## Procedure actually used
-
-For each task:
-
-1. The implementation at pinned DafnyBench commit
-   `0cd28feed9cd0179b07fdb9d002f8c39063658e4` was retained as a hidden
-   reference.
-2. The recorded task prompts removed the reference body, examples,
-   source-identifying comments, sibling solutions, and algorithm-revealing
-   declaration names. The model received the neutrally renamed target header,
-   its contract, and the minimum definitions needed to understand and verify
-   it. A later log audit found a separate platform-metadata filename leak for
-   Cases 006, 007, and 012; it is disclosed below and in `STUDY_SCOPE.md`.
-3. One fresh-context `gpt-5.6-sol` generation was instructed not to browse or search
-   the Web, call tools, inspect the filesystem, contact other agents, or access
-   the hidden reference.
-4. The first response was preserved without repair and checked with Dafny
-   4.3.0.
-5. Only a verifier-pass candidate entered equivalence analysis. The comparison
-   sought a concrete counterexample or machine-checked relational theorem,
-   stated the relevant observation relation, and disclosed any remaining
-   code-inspection or undetermined boundary.
-
-Across the pilot there were **5 generation attempts; equivalence analysis
-was performed for the 4 verifier-pass attempts.** The remaining attempt is
-retained as a verifier-fail result, not treated as an equivalence case.
-
-The extension independently froze **10 first attempts**. Seven passed the
-verifier and therefore entered comparison; three failed and stopped at the
-gate. One of the seven pass attempts (Case 006) made a prohibited outbound
-progress call before its final code response. It remains visible as a
-protocol-deviating result and was not replaced. The extension therefore also
-has a separate protocol-conforming denominator: **9 conforming attempts, of
-which 6 passed verification**.
-
-The prompt-level prohibition was audited against the locally retained
-structured logs. The five pilot cases and nine of ten extension cases had zero
-tool, Web, filesystem, or outbound-agent calls before the saved response;
-Case 006 had the disclosed outbound progress call. Tools existed in the
-execution environment, so these are actual-use observations, not
-capability-level removal.
-
-A distinct masking limitation was also found in the platform `world_state`:
-historical command metadata exposed the identifying filename terms
-`LFUSimple.dfy`, `BST.dfy`, and `MajorityVote.dfy` to the generation contexts
-for Cases 006, 007, and 012, respectively. No reference body was exposed and no
-filesystem or Web call retrieved one, but these three runs are
-filename-mask-confounded and are not clean evidence for the effectiveness of
-name masking. See
-[`provenance/manifest.json`](provenance/manifest.json) and
-[`provenance/extension_manifest.json`](provenance/extension_manifest.json)
-for model settings, generation-artifact hashes, raw-response hashes, exact
-denominators, and limitations.
-
-## Preliminary pilot results
-
-| Case | DafnyBench task | First generation | Post-gate comparison |
+| Case | Programming task | Generated program | Comparison with the original |
 |---|---|---|---|
-| [001](case_001_substring_occurrence/REPORT.md) | ID004, substring occurrence witness | `3 verified, 0 errors` | **Concrete counterexample to raw tuple equality.** On `("a","b")`, reference returns `(false,1)` and generated returns `(false,0)`. They agree if the failure index is unobservable; by code inspection they also agree on success. |
-| [002](case_002_local_transition_trace/REPORT.md) | ID117, higher-order local transition trace | `3 verified, 2 errors` | **Verifier-fail; comparison gate not entered.** The untouched attempt has two index-safety proof failures. |
-| [003](case_003_repeated_value_pair/REPORT.md) | ID311, select two repeated values | `18 verified, 0 errors` | **Concrete counterexamples.** One input reverses pair order and another changes the selected two-value subset. Raw pairs agree exactly when the two implementations' selection orders choose the same first two values in the same order; with exactly two duplicate values, their unordered witness sets agree. |
-| [004](case_004_four_kind_arrangement/REPORT.md) | ID690, arrange four datatype constructors | `18 verified, 0 errors` | **Machine-proved equivalent modulo constructor renaming.** The contract and multiset preservation uniquely determine the result; combined harness: `49 verified, 0 errors`. |
-| [005](case_005_tree_window/REPORT.md) | ID491, interval extraction from a tree-structured string | `3 verified, 0 errors` | **Machine-proved output-equivalent under equal abstract string models.** The returned strings agree for every shared permitted interval; combined harness: `26 verified, 0 errors`. |
+| [001](case_001_substring_occurrence/REPORT.md) | Find a substring and return an index | Pass | Different on failure: for `("a","b")`, the original returns `(false,1)` and the generated program returns `(false,0)`. |
+| [002](case_002_local_transition_trace/REPORT.md) | Build a multi-round trace using a supplied transition function | Fail: 2 proof errors | Not compared. |
+| [003](case_003_repeated_value_pair/REPORT.md) | Return two distinct values that are repeated in a sequence | Pass | Both choose valid repeated values, but their pair order and even the selected pair can differ. |
+| [004](case_004_four_kind_arrangement/REPORT.md) | Arrange four kinds of datatype values in a required order | Pass | The returned sequences are equal after matching the renamed constructors; proved in Dafny. |
+| [005](case_005_tree_window/REPORT.md) | Read a substring from a tree-structured string | Pass | When the two input trees represent the same string, their returned strings are equal for every permitted interval; proved in Dafny. |
+| [006](case_006_entry_selection/REPORT.md) | Choose an entry with minimum frequency from a map | Pass | Both return a minimum entry. A unique minimum forces the same key; with a tie, the specification permits different keys. This run also sent an unintended progress message. |
+| [007](case_007_ordered_structure_extension/REPORT.md) | Insert a value into an ordered tree | Pass | The sets of stored integers are equal. A Dafny model plus inspection of both bodies shows that these two implementations also build the same shape. |
+| [008](case_008_multiplicity_expansion/REPORT.md) | Expand a map of value counts into a sequence | Pass | The result contains the same multiset, but sequence order is not fixed: `[1,2]` and `[2,1]` can both be valid. |
+| [009](case_009_local_array_repair/REPORT.md) | Repair the local order of an array representation | Fail: 1 frame error | Not compared. |
+| [010](case_010_in_place_chain_reversal/REPORT.md) | Reverse a linked chain in place | Fail: 17 resolution/type errors | Not compared. |
+| [011](case_011_queue_extension/REPORT.md) | Append one value to a linked queue | Pass | After matching the two separately allocated new cells, the queue contents, links, and recorded ownership agree; the result combines a Dafny proof with inspection of the two bodies. |
+| [012](case_012_majority_candidate/REPORT.md) | Select a majority candidate | Pass | Equal when a promised majority exists. Without that promise, `[0,1,2]` gives `2` from the original and `0` from the generated program. |
+| [013](case_013_undo_log_recovery/REPORT.md) | Restore an array state from an undo log | Fail: 2 frame errors | Not compared. |
+| [014](case_014_distinct_window/REPORT.md) | Find the maximum length of a substring with distinct characters | Pass | The returned maximum length is always equal. Dafny also proves equal ghost endpoints when the maximizing window is unique; the contracts do not settle tied windows. |
+| [015](case_015_parent_propagation/REPORT.md) | Propagate a value change through a parent chain | Pass | Corresponding nodes receive the same aggregate values while links and payloads stay unchanged; the result combines a Dafny proof with inspection of both bodies. |
 
-The main observation is that verifier success establishes contract conformance,
-not automatically equality of every raw return value. Cases 001 and 003 expose
-open witness choices; cases 004 and 005 show that different implementations
-can be related for all inputs when the specified observation is uniquely
-determined.
+The main result is straightforward: passing the same Dafny specification does
+not by itself guarantee identical return values. Cases 001, 003, and 012 give
+inputs on which the two saved programs return different values. In Case 008,
+the specification and nondeterministic key selection permit different output
+orders; Cases 006 and 014 likewise expose choices when several answers tie.
+Conversely, Cases 004 and 005 prove equality under the input correspondence
+stated in their reports. Cases 007, 011, and 015 show matching outputs or
+state, with the manual inspection steps stated in each report.
 
-## Prospective extension results
+## Important limitations
 
-The frozen extension produced **10 first attempts: 7 verifier-pass and 3
-verifier/resolution failures**. One pass attempt, Case 006, violated the
-zero-outbound-call rule and is retained separately; among the **9 conforming
-attempts, 6 passed verification**.
+This small study uses one model and one answer per task, so the counts above do
+not estimate general model performance. The first five cases were exploratory:
+an earlier task, ID771, was replaced after generation because its executable
+specification made the implementation too direct. That discarded run remains
+in [`archive/`](archive/) and is not counted among the 15 cases.
 
-| Case | First attempt | Post-gate result |
-|---|---|---|
-| [006](case_006_entry_selection/REPORT.md) | `3 verified, 0 errors`; protocol-deviating | Minimum-entry relation proved; raw key equality requires a unique minimum. |
-| [007](case_007_ordered_structure_extension/REPORT.md) | `11 verified, 0 errors` | Abstract sets agree on actual calls; raw shape agrees through a proved executable projection with a disclosed source-audit bridge. |
-| [008](case_008_multiplicity_expansion/REPORT.md) | `4 verified, 0 errors` | Multisets agree; raw sequence order has a permutation counterexample. |
-| [009](case_009_local_array_repair/REPORT.md) | `5 verified, 1 error` | Gate not entered. |
-| [010](case_010_in_place_chain_reversal/REPORT.md) | 17 resolution/type errors | Gate not entered. |
-| [011](case_011_queue_extension/REPORT.md) | `6 verified, 0 errors` | Full normalized queue transition agrees, with a disclosed source-audit bridge. |
-| [012](case_012_majority_candidate/REPORT.md) | `7 verified, 0 errors` | Proved equal with a true promise; concrete raw-output counterexample when false. |
-| [013](case_013_undo_log_recovery/REPORT.md) | `6 verified, 2 errors` | Gate not entered. |
-| [014](case_014_distinct_window/REPORT.md) | `4 verified, 0 errors` | Maximum length proved equal; ghost endpoints require a unique maximizer. |
-| [015](case_015_parent_propagation/REPORT.md) | `4 verified, 0 errors` | Full abstract heap effect agrees, with a disclosed inspected-body bridge. |
+The model was told not to use tools or the Web. Fourteen generations made no
+such call before returning code. Case 006 instead sent one progress message to
+another agent; it is reported but should not be treated as a clean isolated
+run. Tools were available in the environment, so this records what was used,
+not a claim that tool access was technically disabled.
 
-The findings-first account and exact evidence boundaries are in
-[`EXTENSION_RESULTS.md`](EXTENSION_RESULTS.md).
+Neutral names also cannot prove that a task was absent from model training. A
+later inspection found that platform metadata showed the source filenames
+`LFUSimple.dfy`, `BST.dfy`, and `MajorityVote.dfy` during Cases 006, 007, and
+012. It did not expose the method bodies, and the model did not read those
+files, but these three cases do not test whether renaming alone prevented task
+recognition.
 
-## Reproduce
+## Reproduce the results
 
-On a glibc-based Linux x86-64 system compatible with the official Ubuntu 20.04
-package, the following command downloads and verifies Dafny 4.3.0, checks out
-the exact DafnyBench commit, and reproduces all 15 cases:
+On a glibc-based Linux x86-64 system, run:
 
 ```bash
 ./reproduce.sh
 ```
 
-Cases 002, 009, 010, and 013 are recorded verifier/resolution failures; the
-script checks that each failure is reproduced instead of repairing or silently
-dropping it. Detailed requirements, per-case commands, offline overrides, and
-the archived ID771 option are in [`REPRODUCING.md`](REPRODUCING.md). Each
-run's logs are written under an ignored timestamped directory in
-`.repro/runs/`.
+The script obtains Dafny 4.3.0 and the exact DafnyBench revision, verifies the
+15 saved answers, reruns the comparisons, and checks that the four failed
+answers still fail in the recorded way. See [`REPRODUCING.md`](REPRODUCING.md)
+for dependencies and per-case commands.
 
-## Evidence boundaries
-
-- Cases 004 and 005 contain general, unbounded Dafny relational proofs.
-- Cases 001 and 003 contain verified precondition/contract harnesses and
-  executable counterexamples. Broader implementation-strategy statements are
-  explicitly identified as conclusions from code inspection.
-- Name masking reduces obvious benchmark fingerprints but cannot prove that
-  related material was absent from model training.
-- A post-run `world_state` audit found exact identifying target-filename terms
-  for extension Cases 006, 007, and 012. Their prompts still withheld the
-  bodies, and their logs show no file or Web access, but they must be treated as
-  filename-mask-confounded rather than clean masked-name trials.
-- The five tasks, one model, one sample per task, and the post-generation ID771
-  replacement make this a mechanism-discovery pilot, not a pass-rate estimate.
-- The extension was prospectively frozen, but ten tasks and one sample per task
-  are still too small to support broad model-performance claims. Its raw counts
-  are reported with the protocol-deviating Case 006 separated.
-- Complete Codex JSONL logs are retained locally but not published because they
-  contain platform instructions, encrypted reasoning, local paths, and later
-  analysis turns. Public hashes anchor those logs for possible controlled
-  audit, but a hash alone cannot independently prove the zero-call claim.
-- The inter-agent task payload is encrypted in those logs. `PROMPT.md` is the
-  recorded prompt artifact, but this public repository alone cannot
-  independently prove byte-for-byte equality with that encrypted envelope.
-
-## Repository layout
-
-- `STUDY_SCOPE.md`: concise advisor-facing scope, counts, and claim boundaries
-- `SHORTLIST.md`: historical frozen task-selection snapshot; later outcomes
-  are in `EXTENSION_RESULTS.md`
-- `EXTENSION_PROTOCOL.md`: historical frozen pre-generation procedure
-- `case_001_*` through `case_005_*`: five active pilot cases
-- `case_006_*` through `case_015_*`: ten prospectively frozen extension cases
-- `archive/`: disclosed, excluded pilot material
-- `input_masked.dfy`: exact source skeleton exposed for generation
-- `PROMPT.md`: recorded generation instruction and source
-- `generated_attempt_01.dfy`: saved first generated program
-- `verification.txt`: historical environment and verifier record
-- `REPORT.md`: generation outcome and, after the verifier gate, comparison
-- `comparison_harness.dfy`: relational proof or executable counterexample
-- `provenance/`: separate pilot and extension manifests, immutable freeze
-  checksums, and public result-artifact integrity anchors
+Detailed task-selection records, prompts, raw generated programs, verifier
+logs, and checksums remain in the repository. The concise scope statement is
+in [`STUDY_SCOPE.md`](STUDY_SCOPE.md); the ten-case selection and its complete
+result table are in [`SHORTLIST.md`](SHORTLIST.md) and
+[`EXTENSION_RESULTS.md`](EXTENSION_RESULTS.md).

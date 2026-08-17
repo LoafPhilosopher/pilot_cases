@@ -1,76 +1,94 @@
-# Extension case 006: selecting a minimum entry
+# Case 006: selecting a minimum-frequency map entry
 
-## Sources and frozen observation
+**Result: the generated program verifies and always returns a valid
+minimum-frequency key, as does the reference program. The two returned keys
+are guaranteed to be equal only when that minimum is unique.**
 
-- Generated attempt: `generated_attempt_01.dfy`
-- DafnyBench ID010 reference:
-  `third_party/DafnyBench/DafnyBench/dataset/ground_truth/CS5232_Project_tmp_tmpai_cfrng_LFUSimple.dfy`
-- Relational proof: `comparison_harness.dfy`
+## Problem and specification
 
-The alpha-renaming relates reference `cacheMap` to generated `table`.  The
-observable state is unchanged and the returned integer is compared directly
-when the minimum frequency is unique.  With a tied minimum, raw keys are
-reported separately and the primary relation accepts either globally minimal
-key, exactly as frozen in `PREGENERATION.md`.
+This task comes from DafnyBench ID010. The object stores a finite map from an
+integer key to a pair `(value, frequency)`. The map is nonempty when the method
+is called, and every stored frequency is positive. The method must return a
+key whose frequency is no greater than the frequency of any other entry. It
+does not change the map.
 
-## Result
+The generated program received the following essential contract, with neutral
+names and without the reference method body:
 
-**Proved equivalent under the primary frozen relation.  Raw equality is proved
-when the minimum is unique and is not guaranteed when it is tied.**
+```dafny
+method ChooseEntry() returns (selected: int)
+  requires Coherent()
+  requires |table| > 0
+  ensures Coherent()
+  ensures selected in table
+  ensures forall item :: item in table.Items ==>
+    table[selected].1 <= table[item.0].1
+```
 
-`ImplementationsMeetFrozenRelation` calls the actual reference and generated
-methods on related maps.  Dafny proves, for arbitrary coherent nonempty maps,
-that both returned keys satisfy `IsMinimumEntry`.  It also proves that
-`MinimumEntryIsUnique` implies equality of the two returned integers.  This is
-an unbounded relational proof, not bounded testing.
+Here `.1` is the frequency component of a map entry. The contract says which
+keys are acceptable, but it does not specify how to choose between keys with
+the same minimum frequency.
 
-`TiedMinimumWitness` gives a concrete raw-output counterexample state:
+## Reference and generated algorithms
+
+The reference method chooses an arbitrary first entry, records its key and
+frequency, and repeatedly removes an arbitrary entry from a set of unprocessed
+entries. Whenever it sees a smaller frequency, it replaces the current
+candidate.
+
+The generated method follows the same general approach. It chooses an
+arbitrary initial key, iterates over the remaining keys, and replaces the
+candidate only when it finds a strictly smaller frequency. Its loop invariants
+record that the candidate is no worse than every key already processed. Both
+programs therefore leave tie-breaking to Dafny's nondeterministic choice
+operator `:|`.
+
+## Evidence
+
+Dafny 4.3.0 reports:
+
+```text
+Reference program:  8 verified, 0 errors
+Generated program:  3 verified, 0 errors
+Comparison proof:  15 verified, 0 errors
+```
+
+The comparison calls both methods on objects with equal maps. For every
+nonempty coherent map, Dafny proves that each returned key is in the map and
+has globally minimum frequency. It also proves that, if only one key has the
+minimum frequency, the two results must be that same key.
+
+For a tied minimum, exact key equality does not follow. Consider:
 
 ```text
 map[10 := (100, 1), 20 := (200, 1)]
 ```
 
-Both `10` and `20` satisfy the complete observable minimum condition, yet
-`10 != 20`.  Both source bodies use nondeterministic choice over a finite set,
-so separate executions may choose different tied minima.  The harness proves
-the two keys are admissible results; it does not misdescribe this as a sampled
-runtime trace.
+The comparison proof checks that both `10` and `20` satisfy the complete
+return condition and that they are different. This proof alone shows what the
+specification permits; it does not call the two methods and obtain different
+keys. Inspection of the two bodies adds the relevant implementation fact:
+both select keys with Dafny's nondeterministic `:|` operator and neither fixes
+a tie. Their executions may therefore choose different minimum keys, although
+no sampled compiled run is presented as such a counterexample.
 
-## Verification
+## What is and is not established
 
-With pinned Dafny 4.3.0:
+The minimum-entry behavior is proved for arbitrary permitted maps, and exact
+key equality is proved under a unique minimum. With tied minima, the two-key
+example is a machine-checked specification witness; the conclusion that the
+saved bodies may choose differently also uses the direct body inspection just
+described.
 
-```text
-Reference:          8 verified, 0 errors
-Generated attempt:  3 verified, 0 errors
-Combined harness:  15 verified, 0 errors
-```
+This run also has two execution issues. Before returning the code, the
+generation agent sent one progress message to another agent, contrary to the
+instruction not to contact other agents. It did not access the Web or any
+file, and the first code response was kept without a retry. In addition, the
+original filename `LFUSimple.dfy` was visible in platform metadata, although
+the reference body was not. This case therefore cannot be used as a clean test
+of whether neutral renaming prevented recognition of the source task.
 
-The reference warnings concern deprecated semicolons and its pre-existing
-`exists ... ==> ...` quantifier form.  They are not verification errors.  An
-anti-bypass scan of the generated file found no `assume`, `{:verify false}`,
-`{:axiom}`, `{:extern}`, or `decreases *`.
-
-## Protocol deviation
-
-This result **must not be counted as a protocol-conforming sample**.  Before
-returning the saved code, the isolated generation agent sent one outbound
-progress message.  That violates the frozen zero-call/code-only condition.
-There were no Web, filesystem, function-tool, or custom-tool calls, and the
-first attempt was retained without retry or replacement.  The exact message
-is preserved in `protocol_deviation.txt`; provenance is recorded in
-`provenance/extension_manifest.json`.
-
-## Classification
-
-```text
-PRIMARY RELATION: PROVED-EQUIVALENT
-RAW INTEGER:      PROVED EQUAL UNDER UNIQUE MINIMUM;
-                  CONCRETE TIED-MINIMUM DIVERGENCE WITNESS OTHERWISE
-PROTOCOL:         DEVIATING (excluded from conforming counts)
-```
-
-## Reproduction
+## Reproduce
 
 From the repository root:
 

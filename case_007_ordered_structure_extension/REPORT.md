@@ -1,80 +1,86 @@
-# Extension case 007: extending an ordered structure
+# Case 007: inserting an integer into an ordered tree
 
-## Sources and frozen observation
+**Result: Dafny directly proves that calls to the two methods return the same
+set of integers. Their tree shapes are also equal in machine-checked copies of
+the executable branches; a manual check connects those copies to the two
+source bodies.**
 
-- Generated attempt: `generated_attempt_01.dfy`
-- DafnyBench ID107 reference:
-  `third_party/DafnyBench/DafnyBench/dataset/ground_truth/Dafny-Practice_tmp_tmphnmt4ovh_BST.dfy`
-- Relational proof: `comparison_harness.dfy`
+## Problem and specification
 
-`Tree/Empty/Node`, `BST`, and `NumbersInTree` are related by the frozen
-alpha-renaming to `Structure/Blank/Piece`, `Structured`, and `ValuesOf`.
-Raw datatype shape is the first observation; the ordered value-set abstraction
-is reported separately.
+This task is DafnyBench ID107. A tree is either empty or a node containing an
+integer and two subtrees. Its `Layout` is the inorder traversal. A tree is
+`Structured` when this traversal is strictly increasing, so it represents a
+binary search tree with no duplicate values.
 
-## Result
+The model saw these definitions and this contract, but not the reference body:
 
-**Proved equivalent at both the raw-tree and abstract-set levels.**
-
-For the abstract relation, `ActualImplementationsAgreeAbstractly` calls both
-retained methods on corresponding inputs.  `AbstractionEncoding` proves that
-the datatype conversion preserves inorder layout, orderedness, and the value
-set.  Dafny then proves the two actual results are structured and have the same
-value set for arbitrary permitted inputs.
-
-For raw shape, the proof records the executable equations of each target after
-erasing only proof-only assertions, ghost variables, and lemma calls.  Both
-equations recurse left exactly when `item < root` and otherwise recurse right,
-then rebuild the same node.  `ExecutableProjectionAgreement` proves by
-structural induction that encoding the reference result equals the generated
-result for every tree and item.  Two executable-body clone methods are also
-verified against those equations, so every retained branch, recursive call,
-and constructor assignment is checked.  This is an unbounded source-level
-relational proof, not a finite test.
-
-The transparent proof boundary is that Dafny does not automatically extract a
-method body into a pure function: the two projections were transcribed from
-the included bodies and audited against them.  The machine proof checks the
-transcribed executable semantics and their relation; the correspondence of
-each projection to the included source is a small source-inspection step.
-
-## Why the contract alone is insufficient
-
-`ContractShapeWitness` proves that these two unequal shapes are both strictly
-ordered and contain exactly `{1, 2}`:
-
-```text
-Piece(1, Blank, Piece(2, Blank, Blank))
-Piece(2, Piece(1, Blank, Blank), Blank)
+```dafny
+method ExtendStructure(base: Structure, item: int)
+    returns (result: Structure)
+  requires Structured(base) && item !in ValuesOf(base)
+  ensures Structured(result)
+  ensures ValuesOf(result) == ValuesOf(base) + {item}
 ```
 
-Thus raw equality comes from the two implementations sharing the same
-recursive insertion path, not from uniqueness of the postcondition.  The
-abstract relation would hold for either shape.
+Thus the result must remain ordered and contain exactly the old values plus
+`item`. The contract does not itself prescribe a unique tree shape. For
+example, a root `1` with right child `2` and a root `2` with left child `1`
+are both ordered trees containing `{1, 2}`.
 
-## Verification
+## Reference and generated algorithms
 
-With pinned Dafny 4.3.0:
+The reference method performs ordinary recursive binary-search-tree
+insertion. On an empty tree it creates a leaf containing `item`. At a node, it
+recurses into the left subtree when `item` is smaller than the node value and
+into the right subtree otherwise, then rebuilds that node around the returned
+subtree.
+
+The generated method uses exactly those executable branches. Most of its
+length consists of Dafny lemmas showing that inorder sequences remain strictly
+increasing and that the value set changes as required. These proof statements
+do not change the returned tree.
+
+## Evidence
+
+Dafny 4.3.0 reports:
 
 ```text
-Reference:         14 verified, 0 errors
-Generated attempt: 11 verified, 0 errors
-Combined harness:  38 verified, 0 errors
+Reference program: 14 verified, 0 errors
+Generated program: 11 verified, 0 errors
+Comparison proof:  38 verified, 0 errors
 ```
 
-The reference warning is a deprecated semicolon, not an error.  An anti-bypass
-scan of the generated file found no `assume`, `{:verify false}`, `{:axiom}`,
-`{:extern}`, or `decreases *`.
+There are two parts to the comparison. First, a datatype conversion maps the
+reference constructors `Empty` and `Node` to the generated constructors
+`Blank` and `Piece`. Dafny proves that the conversion preserves the inorder
+sequence, the ordering predicate, and the set of stored values. Calling the
+two actual methods then proves that their result sets are equal for every
+permitted tree and inserted integer.
 
-## Classification
+Second, the comparison writes each method's executable statements as a pure
+recursive function. Both functions insert a leaf at an empty position, take
+the same comparison branch, and rebuild the same node. Structural induction
+proves that the two functions return identical tree shapes after constructor
+renaming. Clone methods containing those executable statements also verify
+against the pure functions.
 
-```text
-RAW DATATYPE SHAPE: PROVED-EQUIVALENT VIA EXECUTABLE-SOURCE PROJECTION
-ABSTRACT VALUE SET: PROVED-EQUIVALENT FOR THE ACTUAL METHOD CALLS
-PROTOCOL:           CONFORMING
-```
+## What is and is not established
 
-## Reproduction
+Equality of the abstract value sets is machine-checked directly for calls to
+the two actual methods. Equality of tree shape has a small additional step:
+the executable projections were manually copied from the two included method
+bodies because Dafny does not automatically turn a method body into a pure
+function for relational reasoning. Dafny checks the projections, their clone
+methods, and their equality for trees of any size; a human check connects each
+projection to the corresponding source body. The contract alone would prove
+only equal value sets, not equal shapes.
+
+The original filename `BST.dfy` was visible in platform metadata during
+generation. The method body was not visible, and the generation made no Web,
+file, tool, or inter-agent calls. Even so, this case cannot independently show
+that renaming the declarations prevented recognition of the original task.
+
+## Reproduce
 
 From the repository root:
 

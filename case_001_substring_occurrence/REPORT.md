@@ -1,139 +1,132 @@
-# Pilot case 001: verified substring search programs with different outputs
+# Case 001: substring search returns different failure indices
 
-## Question
+Both the original program and the generated program pass Dafny, but they do
+not always return the same `(ok, index)` pair. For `source = "a"` and
+`pattern = "b"`, the original returns `(false, 1)` and the generated program
+returns `(false, 0)`.
 
-If a Coding Agent synthesizes a Dafny implementation from a method contract and
-the result passes the verifier, is it behaviorally equivalent to the benchmark's
-ground-truth implementation?
+## Problem
 
-## Why this case
+The method searches for `pattern` in `source`. The model was given the
+following specification, with the method body removed:
 
-This is DafnyBench test `004`, whose ground truth implements substring search.
-It is a non-trivial programming task: the original implementation performs a
-nested search over two character sequences, returns both a Boolean and an
-index, and uses quantified invariants and several proof lemmas. It was not
-selected for having a simple scalar output.
+```dafny
+ghost predicate ContainsAtLeastOnce(source: string, pattern: string) {
+  exists position ::
+    0 <= position <= |source| &&
+    pattern <= source[position..]
+}
 
-The original source is:
+ghost predicate ResultCondition(
+    source: string, pattern: string, ok: bool, index: nat) {
+  (ok <==> ContainsAtLeastOnce(source, pattern)) &&
+  (ok ==> index + |pattern| <= |source| &&
+          pattern <= source[index..])
+}
 
-`third_party/DafnyBench/DafnyBench/dataset/ground_truth/AssertivePrograming_tmp_tmpwf43uz0e_Find_Substring.dfy`
-
-## Agent input
-
-The target body and all ground-truth proof code were hidden. Names and comments
-that reveal the original algorithm were removed or replaced consistently:
-
-- `FindFirstOccurrence` became `ComputeWitness`;
-- `ExistsSubstring` became `ContainsAtLeastOnce`;
-- `Post` became `ResultCondition`;
-- parameters and return variables were renamed neutrally.
-
-Only the following semantic requirement remained:
-
-- `ok` is true exactly when `pattern` occurs in `source`;
-- if `ok` is true, `index` denotes an occurrence.
-
-The contract does **not** require the returned occurrence to be the first one,
-and it places no constraint on `index` when `ok` is false.
-
-The exact prompt is in `PROMPT.md`, and the program skeleton is in
-`input_masked.dfy`. The Coding Agent was instructed not to use web search,
-tools, the filesystem, trusted declarations, or verification bypasses. This
-pilot contains one independent generation attempt.
-
-## Verification result
-
-The first raw generation verified without repair:
-
-```text
-Dafny program verifier finished with 3 verified, 0 errors
+method ComputeWitness(source: string, pattern: string)
+    returns (ok: bool, index: nat)
+  ensures ResultCondition(source, pattern, ok, index)
 ```
 
-The generated file contains none of the screened bypasses (`assume`,
-`{:verify false}`, `{:axiom}`, `{:extern}`, or `decreases *`). The original
-ground truth also verifies under the pinned Dafny 4.3.0 installation. Verifying
-the complete comparison unit, including both implementations, produced:
+Here `pattern <= source[position..]` means that `pattern` is a prefix of the
+suffix beginning at `position`, so an occurrence starts there. The contract
+requires `ok` to say whether an occurrence exists. When `ok` is true, `index`
+must point to an occurrence.
+
+Two choices are left unspecified: the contract does not require the first
+occurrence when several exist, and it imposes no condition on `index` when
+`ok` is false.
+
+## What the two programs do
+
+The original DafnyBench program searches using possible *end* positions:
 
 ```text
-Dafny program verifier finished with 16 verified, 0 errors
+if pattern is empty, return (true, 0)
+if source is shorter than pattern, return (false, 0)
+for each possible end position, from left to right:
+    compare pattern and source backwards, one character at a time
+    if every character matches, return the corresponding start position
+return (false, |source|)
 ```
 
-## Implementation comparison
-
-The two verified programs use different implementation structures:
-
-- The ground truth enumerates candidate ending positions and compares the two
-  strings character-by-character backwards in an inner loop. Its proof uses
-  three auxiliary invariant predicates and three lemmas, in addition to the
-  two contract predicates.
-- The generated program enumerates candidate starting positions and directly
-  tests whether `pattern` is a prefix of each suffix `source[i..]`. Its proof is
-  centered on one quantified loop invariant stating that no earlier position
-  matched.
-
-By inspection of these two implementations, both return the first occurrence
-on a successful search,
-although minimality is not required by the supplied contract. This agreement
-may reflect a natural or learned canonical search strategy; one sample is not
-enough to attribute it to training data or naming.
-
-## Counterexample to full output equivalence
-
-For `source = "a"` and `pattern = "b"`, the verified runtime harness prints:
+The generated program searches using possible *start* positions:
 
 ```text
-ground truth: ok=false, index=1
-generated:    ok=false, index=0
+index := 0
+for start := 0, 1, ..., |source|:
+    if pattern is a prefix of source[start..]:
+        return (true, start)
+return (false, 0)
 ```
 
-Both outputs satisfy the contract, because `index` is constrained only when
-`ok` is true. Nevertheless, the complete returned pairs are different.
+Writing `n = |source|`, `m = |pattern|`, and `k` for the first match, inspection
+of the two bodies gives the complete comparison below.
 
-Therefore the two programs are:
+| Input | Original | Generated |
+|---|---|---|
+| `m = 0` | `(true, 0)` | `(true, 0)` |
+| `m > 0` and a match exists | `(true, k)` | `(true, k)` |
+| no match and `n < m` | `(false, 0)` | `(false, 0)` |
+| no match and `n >= m` | `(false, n)` | `(false, 0)` |
 
-- **not extensionally equivalent as raw `(ok, index)`-returning methods**;
-- **equivalent if a client treats `index` as unobservable/irrelevant whenever
-  `ok` is false**;
-- equivalent as raw return pairs under the additional input condition
-  `ContainsAtLeastOnce(source, pattern) || |source| < |pattern|`.
+## Result
 
-The last condition covers successful searches and the ground truth's early
-failure branch, in which both implementations return index `0`.
+The concrete difference occurs on the smallest equal-length failed search:
 
-The Dafny checks prove that each implementation satisfies the contract, and
-the executable harness demonstrates the concrete counterexample. The general
-success-case and conditional-equivalence statements above are conclusions from
-code inspection, not yet a machine-checked relational proof.
+```text
+source = "a", pattern = "b"
+original:  ok=false, index=1
+generated: ok=false, index=0
+```
 
-## Specification observations
+The original checks the only possible location and then advances its search
+position to `|source| = 1`. The generated program initializes `index` to zero
+and leaves it unchanged when no match is found. Both results satisfy the
+contract because the implication that constrains `index` applies only when
+`ok` is true.
 
-Two independent behaviors are left open by the postcondition:
+The verification and execution results were:
 
-1. which occurrence is returned when there are multiple matches;
-2. which index is returned when there is no match.
+| Check | Result | Meaning |
+|---|---|---|
+| Original program, Dafny 4.3.0 | `12 verified, 0 errors` | The original satisfies its specification. |
+| Generated program | `3 verified, 0 errors` | The generated program satisfies the same specification. |
+| File containing both programs and the executable harness | `16 verified, 0 errors` | Both programs and the harness verify; this is **not** a proof that their results are equal. |
+| Execution on `("a", "b")` | `(false,1)` versus `(false,0)` | A concrete input distinguishes the complete return values. |
 
-The first omission did not cause these particular implementations to differ,
-but the second did. If exact return-tuple equivalence is intended, the contract
-must choose a canonical failure index. If “first occurrence” is intended, it
-must also state that there is no earlier matching position.
+## What this establishes
 
-## Takeaway
+The two implementations are not equal as functions returning the complete
+pair `(ok, index)`. Their Boolean results are equal for every input because
+both verified programs must satisfy the same `ok <==> ContainsAtLeastOnce(...)`
+condition.
 
-This case demonstrates the distinction the proposed study is intended to
-examine: passing the same verifier contract establishes contract conformance,
-but it does not necessarily establish equality of all observable program
-outputs. The appropriate equivalence judgment depends on whether the return
-index is considered meaningful on failure.
+Inspection of these particular method bodies also shows that they return the
+same first match on success. Their complete pairs are equal exactly when
 
-## Reproduction
+```text
+ContainsAtLeastOnce(source, pattern) || |source| < |pattern|.
+```
 
-From this repository root:
+Equivalently, they behave the same if a caller ignores `index` after a failed
+search. These general statements about the two algorithms come from checking
+their branches; the current Dafny harness does not contain a relational proof
+of them. The executed example is sufficient, however, to disprove equality of
+the complete return values for all inputs.
+
+To make exact tuple equality follow from the specification, the postcondition
+would need to choose a failure index. It would also need a minimality condition
+if returning the first occurrence, rather than any occurrence, is intended.
+
+## Reproduce
+
+From the repository root:
 
 ```bash
 ./reproduce.sh --case 001
 ```
 
-This installs or checks the pinned dependencies, verifies the reference,
-generated attempt, and combined harness, and runs the concrete counterexample
-without writing compiler output into the case directory. Historical command
-outputs are preserved in `verification.txt`.
+This case is DafnyBench ID004. The model received the specification above and
+necessary definitions, but not the original method body.

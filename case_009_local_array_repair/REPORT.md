@@ -1,32 +1,80 @@
-# Case 009 — generation outcome
+# Case 009: one-step repair of a max-heap array
 
-This is one of the ten prospectively frozen extension tasks. Exactly one
-response was generated and preserved. The model used no Web, network,
-filesystem, tool, or other-agent call before returning its final response.
+**Result: the generated program does not verify. Dafny reports one error on
+its array update, so no equivalence claim is made.**
 
-## Outcome
+## Problem and specification
 
-The untouched candidate does not pass Dafny 4.3.0: `5 verified, 1 error`.
-Inside its loop, Dafny rejects the assignment `this.data[i] := 0` because the
-loop's enclosing modification context does not establish permission for that
-array-element update.
+This task is DafnyBench ID288. An integer array represents a binary tree: the
+children of position `i` are `2*i+1` and `2*i+2` when those indices exist.
+`GloballyOrdered` means every parent is at least as large as each child, which
+is the max-heap property.
 
-The candidate's strategy is nevertheless informative: it attempts to set
-every element to zero, return `-1`, and thereby establish the global ordering
-predicate. This exploits the absence of any content-preservation condition in
-the target contract rather than performing the reference's local repair. That
-semantic observation is not an equivalence result because the candidate did
-not cross the verifier gate.
+The input is already ordered everywhere except possibly at one position. The
+method performs one local repair step and returns either `-1`, meaning the
+whole array is now ordered, or a later array position at which the only
+remaining local problem may occur. In simplified form, the contract is:
 
-## Comparison gate
+```dafny
+method RepairAt(position: int) returns (next: int)
+  modifies this, this.data
+  requires 0 <= position < this.data.Length
+  requires OrderedAwayFrom(this.data[..], position)
+  ensures next == -1 || position < next < this.data.Length
+  ensures next == -1 ==> GloballyOrdered(this.data[..])
+  ensures position < next < this.data.Length ==>
+    OrderedAwayFrom(this.data[..], next)
+```
 
-Not entered. Per the frozen protocol, verifier-fail outputs are neither repaired
-nor compared with the hidden implementation. No retry or replacement was made.
-The frozen full observation relation—array reference/alias preservation,
-complete post-state contents, and `next`—remains recorded in
-`PREGENERATION.md`, but no equivalence label is assigned here.
+`OrderedAwayFrom` contains the source program's exact quantified conditions,
+including two boundary conditions involving the parent of `position`; it was
+not replaced with a more conventional heap predicate.
 
-## Reproduction
+## Reference and generated algorithms
+
+The reference examines the node at `position` and its children. If there are
+no children, it returns `-1`. Otherwise it finds the largest among the current
+node and its existing children. If the current node is already largest, it
+returns `-1`; if a child is larger, it swaps that child with the current node
+and returns the child's index. This is one downward repair step, not a complete
+recursive heapification.
+
+The generated program takes a very different approach. It loops over the
+entire array, attempts to replace every value with zero, and then returns
+`-1`. An all-zero array would satisfy `GloballyOrdered`, and the contract does
+not require preservation of the input values or their multiset. The idea
+therefore exposes freedom in the written specification, but the submitted
+code still has to verify before it can count as a valid implementation.
+
+## Exact verification result
+
+The reference program verifies with `6 verified, 0 errors`. Dafny 4.3.0 gives
+the generated program `5 verified, 1 error` and points to the assignment in
+its loop:
+
+```text
+generated_attempt_01.dfy(51,15): Error: assignment might update an
+array element not in the enclosing context's modifies clause
+
+51 |       this.data[i] := 0;
+   |                ^
+```
+
+Thus Dafny does not establish that the generated method is permitted to carry
+out the array update in that loop. The output was kept as the first response;
+it was not repaired or replaced.
+
+## What is and is not established
+
+There is no generated-versus-reference equivalence result for this case. In
+particular, the failed source does not prove that the all-zero strategy
+satisfies the contract, nor does it establish the post-state or returned value
+of a valid generated program. It only suggests a possible under-specification:
+the postconditions describe heap ordering but do not preserve array contents.
+A repaired version was intentionally not tested, so that suggestion remains
+separate from the recorded generation result.
+
+## Reproduce
 
 From the repository root:
 

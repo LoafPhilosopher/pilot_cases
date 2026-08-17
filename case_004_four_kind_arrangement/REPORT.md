@@ -1,117 +1,96 @@
-# Pilot case 004: the arrangement contract uniquely determines the result
+# Case 004: arranging four kinds
 
-## Question
+Dafny proves that the reference and generated programs return the same sequence, after matching the four renamed constructors.
 
-Does satisfying `ValidArrangement(result)` while preserving the input multiset
-leave room for two verified implementations to return different sequences?
+## Problem
 
-## Sources compared
-
-- Generated attempt: `generated_attempt_01.dfy`
-- DafnyBench ground truth ID690:
-  `third_party/DafnyBench/DafnyBench/dataset/ground_truth/formal_verication_dafny_tmp_tmpwgl2qz28_Challenges_ex7.dfy`
-- Machine-checked relational proof: `comparison_harness.dfy`
-
-The ground truth calls its constructors `A`, `C`, `G`, and `T` and its ordering
-predicate `below`. The masked/generated program consistently renames these to
-`K0`, `K1`, `K2`, and `K3` and calls the predicate `AllowedPair`.
-
-## Result
-
-**The returned sequence is uniquely determined by `ValidArrangement` and the
-preserved multiset.** This is a general, unbounded Dafny proof, not a finite test.
-
-Consequently:
-
-- any two calls to `Transform` on the same permitted input return equal
-  sequences;
-- any two calls to ground-truth `Sorter` return equal sequences; and
-- after the constructor bijection `A/C/G/T -> K0/K1/K2/K3`, the concrete
-  ground-truth and generated calls return equal sequences.
-
-The combined verification result is:
+The input is a nonempty sequence whose elements come from four constructors,
+renamed `K0`, `K1`, `K2`, and `K3` in the generated task. They have the order
 
 ```text
-Dafny program verifier finished with 49 verified, 0 errors
+K0 < K1 < K2 < K3.
 ```
 
-## Why the specification is deterministic
+The method must rearrange the input into this order without adding or removing
+elements. Its essential specification is:
 
-`AllowedPair` is precisely the nondecreasing order induced by:
+```dafny
+datatype Kind = K0 | K1 | K2 | K3
+
+predicate ValidArrangement(items: seq<Kind>) {
+  forall j, k :: 0 <= j < k < |items| ==>
+    AllowedPair(items[j], items[k])
+}
+
+method Transform(items: seq<Kind>) returns (result: seq<Kind>)
+  requires 0 < |items|
+  ensures |result| == |items|
+  ensures ValidArrangement(result)
+  ensures multiset(result) == multiset(items)
+```
+
+`AllowedPair(a, b)` is true exactly when `a` is no later than `b` in the order
+above. Consequently `ValidArrangement` requires every earlier element of the
+result to be less than or equal to every later element. The multiset clause
+preserves the number of occurrences of each constructor.
+
+## What the reference and generated programs do
+
+The reference program uses four moving regions, in the style of the Dutch
+national flag algorithm. It scans an unclassified part of the sequence and
+swaps the current element into the region belonging to its constructor. The
+four reference constructors are named `A`, `C`, `G`, and `T`; they correspond
+respectively to `K0`, `K1`, `K2`, and `K3`.
+
+The generated program defines numeric ranks from zero to three and implements
+functional insertion sort:
 
 ```text
-Rank(K0) = 0 < Rank(K1) = 1 < Rank(K2) = 2 < Rank(K3) = 3
+Sort([]) = []
+Sort(head + tail) = Insert(head, Sort(tail))
+Insert(x, sorted) places x before the first element whose rank is at least x's
 ```
 
-Thus `ValidArrangement` says every earlier element is less than or equal to
-every later element. For two valid sequences with equal multisets, the proof in
-`UniqueValidArrangement` proceeds inductively:
+It supplies recursive lemmas showing that insertion preserves sortedness,
+length, and the multiset. The algorithms are structurally different: one
+partitions with swaps, while the other recursively constructs a sorted
+sequence.
 
-1. Equal multisets imply equal lengths.
-2. Each first element occurs in the other sequence.
-3. Validity makes each sequence's first element no greater than every element
-   occurring in that sequence. Applying this in both directions gives equal
-   ranks for the two heads.
-4. `Rank` is injective on the four constructors, so the heads are equal.
-5. Cancelling that common singleton from the equal multisets gives equal tail
-   multisets. Validity is inherited by tails, so induction proves equal tails.
+## Result and evidence
 
-This proves equality for arbitrary sequence lengths and arbitrary
-multiplicities of all four constructors. The theorem itself also covers the
-empty sequence, although both implementation contracts require nonempty input.
-
-## Relational harness
-
-The harness includes both complete source files and contains three executable
-relational proof methods:
-
-- `GeneratedCallsAgree` calls `Transform` twice and proves its two results
-  equal using only the public postconditions and the uniqueness theorem.
-- `GroundTruthCallsAgree` does the analogous proof for `Sorter`.
-- `ImplementationsAgree` calls both concrete implementations on corresponding
-  inputs and proves
-  `Encode(original) == generated`.
-
-`Encode` is the elementwise constructor bijection. Supporting lemmas prove that
-it preserves length, individual elements, multiplicities, and the arrangement
-predicate, and that it is injective. Therefore the cross-implementation result
-is semantic equality modulo the intentional datatype renaming, not merely
-agreement on selected examples.
-
-## Implementation comparison
-
-The implementations reach the canonical arrangement differently:
-
-- ID690 implements a four-region Dutch-national-flag partition with mutable
-  boundary indices and sequence swaps.
-- The generated attempt implements functional insertion sort, together with
-  recursive lemmas for sortedness, length, and multiset preservation.
-
-Their algorithmic structures differ substantially, but the contract permits
-only one returned sequence for a given input multiset. In this case, contract
-conformance is enough to establish output equivalence.
-
-## Verification and trust checks
-
-Using the repository's pinned Dafny 4.3.0 installation:
+Dafny 4.3.0 reports:
 
 ```text
-Ground truth:         6 verified, 0 errors
-Generated attempt:  18 verified, 0 errors
-Combined harness:   49 verified, 0 errors
+Reference program:   6 verified, 0 errors
+Generated program:  18 verified, 0 errors
+Comparison file:    49 verified, 0 errors
 ```
 
-The two warnings in ground-truth and combined verification concern deprecated,
-unnecessary semicolons after specification clauses; they are not verification
-errors. An anti-bypass scan of the generated attempt found no `assume`,
-`{:verify false}`, `{:axiom}`, `{:extern}`, or `decreases *`.
+The central lemma in the comparison file proves that two valid arrangements
+with the same multiset must be equal. The reason is simple. The first element
+of each valid arrangement is no greater than any other element. Since the two
+sequences contain the same elements, their first elements must have the same
+rank and therefore be the same constructor. Removing that common first
+element leaves two valid tails with the same multiset. Repeating the argument
+proves that the complete sequences are equal.
 
-## Reproduction
+The comparison then calls both actual methods and converts the reference
+result from `A/C/G/T` to `K0/K1/K2/K3`. Dafny proves that this converted
+reference result equals the generated result for every permitted input, not
+only for a collection of examples.
 
-From this repository root:
+## What is proved and what is not
 
-```bash
-./reproduce.sh --case 004
-```
+The machine-checked conclusion covers sequences of arbitrary length and any
+multiplicity of the four constructors. It establishes equality of the complete
+returned sequence under the stated constructor renaming. The proof works
+because the ordering and multiset conditions allow only one result.
 
-Historical command outputs are preserved in `verification.txt`.
+The result does not say that the two implementations use the same algorithm or
+have the same running time. It also does not compare the internal proof lemmas
+line by line. Those differences are irrelevant to the returned sequence: once
+both methods satisfy this contract, their outputs are forced to agree.
+
+## Reproduce
+
+Run `./reproduce.sh --case 004` from the repository root.

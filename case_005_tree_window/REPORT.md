@@ -1,120 +1,95 @@
-# Pilot case 005: extracting an interval from a tree-structured string
+# Case 005: extracting part of a tree-structured string
 
-## Outcome
+Dafny proves that the reference and generated programs return the same string for every valid interval on corresponding trees.
 
-The untouched first generation passes Dafny and is output-equivalent to the
-hidden DafnyBench reference under the natural representation relation: the two
-input objects denote the same abstract string and receive the same interval.
-The combined harness proves this for every well-formed pair of inputs and every
-permitted interval:
+## Problem
 
-```text
-Dafny program verifier finished with 26 verified, 0 errors
-```
+The input object represents a string as a tree. A leaf stores a nonempty text
+chunk. An internal node represents the concatenation of its children; it may
+also have only a left child or only a right child. A ghost field called `Model`
+records the complete abstract string, and `pivot` is the length of the left
+part when a left child exists. The well-formedness predicate connects the
+tree's fields to that abstract string and ensures that recursive calls move to
+smaller, disjoint subtrees.
 
-This is a general, unbounded relational proof rather than bounded testing.
-
-The hidden reference is DafnyBench ID491:
-
-`third_party/DafnyBench/DafnyBench/dataset/ground_truth/dafny-rope_tmp_tmpl4v_njmy_Rope.dfy`
-
-Its target is the original `report` method. The source supplied for generation
-renames the module, class, fields, invariant, and target method, and removes the
-reference body, all other methods, constructors, comments, examples, and source
-identifiers.
-
-## Why this is a non-trivial programming task
-
-The input is a heap-allocated tree whose leaves store nonempty string chunks.
-Internal nodes describe concatenation through two nullable children and a
-concrete split position. The target must materialize an arbitrary half-open
-interval of the abstract string. A correct executable body has to handle:
-
-- an empty interval;
-- a leaf chunk;
-- one-child nodes;
-- an interval contained entirely in either child; and
-- an interval crossing the split point, including offset translation and
-  concatenation of two recursive results.
-
-It must also prove that recursive calls decrease by the representation set and
-that all translated slice bounds are safe. The abstract `Model` field is ghost,
-so it cannot be copied into the executable return value. Unlike the superseded
-ID771 case, the prompt exposes no executable specification function that
-computes the answer.
-
-## Isolated generation and verification
-
-The generator was instructed to make no Web, network, tool, filesystem, or
-other-agent calls. The structured session log records zero such calls before
-the first and only code response. The reference implementation was not in the
-generator's context.
-
-The saved program is the first returned Dafny content, with only a final newline
-added when it was written to disk. It was not repaired before verification and
-contains none of the screened verification bypasses or output side effects.
-
-Using Dafny 4.3.0:
-
-```text
-Hidden reference:       21 verified, 0 errors
-Generated attempt:       3 verified, 0 errors
-Combined harness:       26 verified, 0 errors
-```
-
-Warnings in the reference concern deprecated unnecessary semicolons; they are
-not verification errors.
-
-## Relational equivalence proof
-
-`comparison_harness.dfy` calls both concrete implementations and proves their
-returned strings equal under these conditions:
+The target method receives a half-open interval `[start, stop)` and must return
+that part of the represented string:
 
 ```dafny
-reference.Valid()
-generated.WellFormed()
-reference.Contents == generated.Model
-0 <= start <= stop <= |reference.Contents|
+method ExtractWindow(start: nat, stop: nat) returns (out: string)
+  requires 0 <= start <= stop <= |this.Model|
+  requires WellFormed()
+  ensures out == this.Model[start..stop]
+  decreases Footprint
 ```
 
-The two contracts yield:
+This is not implemented by simply returning `Model[start..stop]`, because
+`Model` is a ghost field and is unavailable to executable code. The program
+must navigate the concrete tree, translate indices when it moves to the right
+child, combine two recursive results when an interval crosses the pivot, and
+prove that every slice and recursive call is valid.
+
+## What the reference and generated programs do
+
+The reference program first handles an empty interval. For a nonempty
+interval, it uses the following recursion:
+
+```text
+if this is a leaf: return the requested slice of its chunk
+if stop <= pivot: recurse into the left child
+if pivot <= start: recurse into the right child with both indices minus pivot
+otherwise: concatenate the left suffix [start, pivot)
+           and the right prefix [0, stop - pivot)
+```
+
+The generated program reaches the same decomposition but organizes its cases
+differently. It first distinguishes all four possible child configurations.
+A leaf slices its chunk; a one-child node delegates to that child; and a
+two-child node selects the left, right, or crossing case. It includes explicit
+equalities relating slices of `first.Model + second.Model` to slices of the two
+children so that Dafny can prove the postcondition.
+
+## Result and evidence
+
+Dafny 4.3.0 reports:
+
+```text
+Reference program:   21 verified, 0 errors
+Generated program:    3 verified, 0 errors
+Comparison file:     26 verified, 0 errors
+```
+
+The two source files use different class and field names. The comparison file
+takes one valid reference object and one well-formed generated object, assumes
+that they denote the same abstract string, and supplies the same `start` and
+`stop` values to both methods:
 
 ```dafny
-referenceOut == reference.Contents[start..stop]
-generatedOut == generated.Model[start..stop]
+requires reference.Contents == generated.Model
+requires 0 <= start <= stop <= |reference.Contents|
+ensures referenceOut == generatedOut
 ```
 
-The representation relation equates the two abstract strings, so the outputs
-are equal. This also explains why the result is determined without assigning a
-pre-existing “strong” or “weak” label: for a fixed abstract input and interval,
-the postcondition permits exactly one observable string.
+It calls both actual implementations. The reference contract gives
+`referenceOut == reference.Contents[start..stop]`, while the generated
+contract gives `generatedOut == generated.Model[start..stop]`. Since the two
+abstract strings are equal, Dafny proves that the returned strings are equal.
+The argument covers every valid tree pair and every permitted interval; it is
+not based on a finite set of test inputs.
 
-The theorem does not claim that a reference heap object and a renamed generated
-heap object are pointer-identical. They belong to different modules and are
-related through their abstract string views, which is the relevant input
-observation for this read-only method.
+## What is proved and what is not
 
-## Implementation comparison
+The proof establishes equality of the complete executable return value under
+the natural input correspondence: both tree objects represent the same string
+and receive the same interval. This includes empty intervals, leaf slices,
+one-child nodes, and intervals lying on either side of or crossing a pivot.
 
-Both programs discover the natural recursive decomposition implied by the
-representation invariant, but the generated body is independently expressed:
+It does not claim that the two heap objects are identical or that their trees
+have the same shape. Those properties are neither required nor relevant to
+this read-only operation. The equality proof follows from the two verified
+postconditions; the source comparison explains how each implementation
+computes the required slice but is not needed as an additional assumption.
 
-- the reference treats the empty interval first, then distinguishes a leaf
-  from internal nodes and dispatches left, right, or across the split;
-- the generation first expands all nullable-child shapes, then treats the
-  two-child case with three interval positions and explicit sequence-slice
-  equalities.
+## Reproduce
 
-Their structural similarity is explainable from the contract and data
-representation and is not evidence that training contamination has been
-eliminated. Name masking only reduces obvious benchmark fingerprints.
-
-## Reproduction
-
-From this repository root:
-
-```bash
-./reproduce.sh --case 005
-```
-
-Historical results and isolation evidence are preserved in `verification.txt`.
+Run `./reproduce.sh --case 005` from the repository root.

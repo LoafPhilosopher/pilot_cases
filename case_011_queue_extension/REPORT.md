@@ -1,103 +1,93 @@
-# Case 011: queue extension preserves the complete frozen heap observation
+# Case 011: appending one item to a verified queue
 
-## Outcome
+After matching the old cells and treating the two newly allocated cells as
+corresponding, the reference and generated programs produce the same queue
+contents, links, and recorded ownership. One part of this conclusion depends
+on a manual check that the mathematical summaries in the comparison file
+match the two source bodies.
 
-**Classification: `proved-equivalent`.** For the same valid initial queue and
-the same appended value, the generated `Buffer.UpdateStructure` and hidden
-DafnyBench `Queue.Enqueue` have the same final observation under the relation
-frozen before generation. Fresh objects are compared up to a bijection that
-fixes every pre-existing object.
+## Problem given to the model
 
-The untouched generation, pinned reference, and combined comparison unit all
-verify with Dafny 4.3.0:
+This is DafnyBench ID309. The program represents a queue by a first cell, a
+last cell, a set of cells, ownership sets, and a ghost sequence `model`. Each
+cell stores a value, a successor, a ghost suffix, and its own ownership set.
+The consistency predicate connects all of these fields. In particular, the
+last cell has no successor and `model` is the suffix stored at the first cell.
 
-```text
-Hidden reference:       18 verified, 0 errors
-Generated attempt:       6 verified, 0 errors
-Combined harness:       35 verified, 0 errors
+The model received the class definitions and the following method contract,
+but not the reference implementation:
+
+```dafny
+method UpdateStructure(item: T)
+  requires Consistent()
+  modifies owned
+  ensures Consistent() && fresh(owned - old(owned))
+  ensures model == old(model) + [item]
 ```
 
-The comparison theorem is symbolic and unbounded; it does not enumerate queue
-sizes or values.
+Thus it had to allocate and connect a new cell, update the ghost state needed
+by `Consistent`, and prove that the abstract queue gained exactly `item`.
 
-## Sources compared
+## What the two programs do
 
-- DafnyBench ID309 at pinned commit
-  `0cd28feed9cd0179b07fdb9d002f8c39063658e4`;
-- hidden target `Queue<T>.Enqueue` in
-  `third_party/DafnyBench/DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny1_Queue.dfy`;
-- frozen target `Buffer<T>.UpdateStructure` in `generated_attempt_01.dfy`; and
-- relational artifact `comparison_harness.dfy`.
+The reference `Queue.Enqueue` performs the following steps:
 
-The generated file has SHA-256
-`6b9f0f9d5e3a6988a775d8205223b5a798628a784f0e4330028366187cffaa48`.
-The pinned reference file has SHA-256
-`55e9bb47973f2ffcaa9d00dc4b2f29981efbefdaee832a1633d28723d7597f66`.
+```text
+allocate a new node and store item in it
+set the old tail's next pointer to the new node
+make the new node the tail
+append item to every old node's ghost suffix
+add the new node's ownership set to every old node
+extend the queue-level contents, footprint, and node set
+```
 
-## Exact transition comparison
+The generated `Buffer.UpdateStructure` performs the same state changes. Its
+proof is much longer: it first records maps of all old fields, links the new
+cell, and then uses a ghost work-set loop to update each old cell exactly once.
+It finally rebuilds the queue-level sets and assigns `model` from the first
+cell's updated suffix. The difference is therefore in proof organization, not
+in the resulting queue.
 
-After applying the frozen aliases, both concrete bodies perform the same state
-transition:
+## Comparison and Dafny results
 
-1. allocate exactly one fresh cell using the retained constructor, whose
-   successor is null, suffix is empty, and ownership set is the singleton
-   containing that cell;
-2. assign the new cell's value to the appended item;
-3. change the old last cell's successor to the new cell, leaving every other
-   pre-existing concrete pointer and every old cell value unchanged;
-4. append the item to every old cell's ghost suffix and add the new singleton
-   ownership set to every old cell's ownership set;
-5. retain the first cell, make the new cell the last cell, add it to the chain
-   and queue ownership set, and set the abstract model to the old model plus
-   the item.
+Two independent executions cannot have equal object addresses, because each
+allocates its own new cell. The comparison therefore gives every pre-existing
+cell a stable integer identifier and gives the one newly allocated cell the
+same fresh identifier in both executions. Under these identifiers, the
+comparison records the first and last cells, all cells and owned objects, each
+value and successor, every ghost suffix and cell ownership set, and the
+abstract sequence. It also records that the only old successor changed is the
+old last cell's successor.
 
-The generated program uses a ghost work-set loop where the reference uses two
-`forall` statements, and it performs some ghost assignments in a different
-order. Each old cell is nevertheless updated exactly once, and the final
-concrete and ghost states are identical after identity normalization.
+Under this numbering, the two described post-states are equal for every valid
+input queue, appended value, and unused fresh identifier. Dafny 4.3.0 reports:
 
-## Coverage of the frozen observation relation
+```text
+Reference program:    18 verified, 0 errors
+Generated program:     6 verified, 0 errors
+Combined comparison:  35 verified, 0 errors
+```
 
-`FrozenObservationsAgree` represents corresponding old objects by the same
-integer identity and gives the two fresh cells one shared fresh identity. It
-proves equality of a record containing:
+The equality proof shows that both normalized queues have the old first cell,
+the same newly mapped last cell, the old abstract sequence followed by
+`item`, identical old values and links except for the tail link, and identical
+updated ghost summaries.
 
-- the full abstract sequence;
-- first and last identities, the complete cell set, every cell value, every
-  successor, and the last cell's null successor;
-- every per-cell suffix and ownership set, plus the queue ownership set;
-- the set of newly allocated objects; and
-- the set of pre-existing cells whose concrete successor field is written,
-  namely the singleton containing the old last cell.
+## What is and is not established
 
-Thus the theorem covers all four observations fixed in `PREGENERATION.md`, not
-only abstract-sequence equality. Old identities are unchanged, and the fresh
-bijection extends the old bijection by mapping the one new reference node to
-the one new generated cell.
+The public method contract alone guarantees only a valid queue and the updated
+abstract sequence. It does not uniquely determine all pointers and ownership
+sets. The comparison file therefore defines the complete state change visible
+in each retained source body and proves those two definitions equal.
 
-## Proof boundary
-
-Dafny verifies both included source files and proves equality of the two
-normalized transition functions for every complete symbolic snapshot and
-fresh identity. The extraction of those transition functions from the two
-imperative bodies is transparent in `comparison_harness.dfy` and was checked
-statement by statement as listed above, but Dafny does not automatically inline
-the heap methods into that algebraic theorem. The machine-checked claim is the
-unbounded transition equality; correspondence between each extracted field
-update and its source statement is a source-audit obligation.
-
-This qualification matters because the public postcondition by itself fixes
-only the abstract model. It would permit other verifier-passing implementations
-with different fresh topologies. The `proved-equivalent` result applies to
-these two retained concrete bodies, not to every program satisfying the same
-contract.
+Dafny checks equality of the two state-change definitions for arbitrary
+queues. Matching each field in those definitions to the assignments in the
+two retained method bodies is the manual step. The conclusion therefore
+applies to these two bodies; the short public contract alone would also permit
+other pointer and ownership arrangements.
 
 ## Reproduction
-
-From the repository root:
 
 ```bash
 ./reproduce.sh --case 011
 ```
-
-The exact commands and observed results are preserved in `verification.txt`.

@@ -1,66 +1,99 @@
-# Case 002: local transition trace
+# Case 002: building a Boolean transition trace
 
-## Task and selection rationale
+The first generated program did not pass Dafny, so no comparison with the reference program was made.
 
-This is DafnyBench test `117`. Given a Boolean seed row, a higher-order local
-transition function, and a number of rounds, the target must construct the
-complete sequence of rows. Each next cell depends on three cells from the
-previous row, with `false` used beyond the two boundaries.
+## Problem
 
-The task is non-trivial as a programming and verification problem: it combines
-a higher-order function, a nested sequence result, boundary cases, recursive or
-nested iteration, and doubly quantified postconditions. The original benchmark
-examples, comments, class name, and method name were removed. The Agent saw
-only the neutral interface in `input_masked.dfy`.
+The input consists of a Boolean sequence `seed`, a function `transition` that
+maps three Boolean values to one Boolean value, and a non-negative number of
+rounds. The output is the complete history of repeatedly applying the function
+to the row. The first output row must be `seed`; each later cell is computed
+from the cell at the same position and its two neighbours in the preceding
+row. A missing neighbour beyond either end of the row is treated as `false`.
 
-Hidden reference:
+The generated program was required to implement this interface:
 
-`third_party/DafnyBench/DafnyBench/dataset/ground_truth/DafnyPrograms_tmp_tmp74_f9k_c_automaton.dfy`
+```dafny
+method BuildTrace(
+    seed: seq<bool>,
+    transition: (bool, bool, bool) -> bool,
+    rounds: nat)
+  returns (trace: seq<seq<bool>>)
+  requires |seed| >= 2
+  ensures |trace| == rounds + 1
+  ensures trace[0] == seed
+  ensures forall i | 0 <= i < |trace| :: |trace[i]| == |seed|
+  ensures forall i | 0 <= i < |trace| - 1 ::
+    forall j | 1 <= j <= |trace[i]| - 2 ::
+      trace[i + 1][j] ==
+        transition(trace[i][j - 1], trace[i][j], trace[i][j + 1])
+```
 
-## One-shot generation result
+Two further postconditions specify the boundary cells: the next row starts
+with `transition(false, old[0], old[1])` and ends with
+`transition(old[last - 1], old[last], false)`. The contract therefore
+determines the complete returned trace for a fixed seed, transition function,
+and number of rounds.
 
-The isolated Coding Agent received `PROMPT.md` and was instructed not to use
-Web, tools, the filesystem, or a reference. The generation log records zero
-such calls before its response, and the reference was not included in its
-context. It generated a recursive trace builder and a sequence-constructor
-helper. The raw first attempt is preserved unchanged in
-`generated_attempt_01.dfy`.
+## What the reference and generated programs do
 
-The hidden reference verifies:
+The reference program builds the trace iteratively:
+
+```text
+result := [seed]
+current := seed
+repeat rounds times:
+    start the next row with transition(false, current[0], current[1])
+    append each interior cell computed from its three neighbours
+    append transition(current[last-1], current[last], false)
+    append the completed row to result
+return result
+```
+
+The generated program chose a recursive organization. For zero rounds it
+returns `[seed]`. Otherwise it recursively builds the trace for one fewer
+round, takes the final row of that prefix, constructs its successor with a
+helper called `BuildNext`, and appends the successor. `BuildNext` uses a Dafny
+sequence-constructor expression with separate cases for the first cell, last
+cell, and interior cells.
+
+The two descriptions express the same intended recurrence, but intention is
+not enough for a verified Dafny solution: every sequence access must also be
+proved safe.
+
+## Result and evidence
+
+With Dafny 4.3.0, the reference program produced:
 
 ```text
 Dafny program verifier finished with 3 verified, 0 errors
 ```
 
-The generated attempt does not:
+The untouched generated program produced:
 
 ```text
 Dafny program verifier finished with 3 verified, 2 errors
 ```
 
-Both errors are index-safety proof failures in the fallback branch of the
-`BuildNext` sequence-constructor lambda. No forbidden verification bypass or
-extra output side effect was found.
+Both errors occur in the fallback branch of the sequence-constructor lambda in
+`BuildNext`. Dafny cannot establish that the accesses corresponding to
+`row[j - 1]` and `row[j]` are in range at that point. These are proof errors in
+the submitted program, not counterexamples showing that the returned trace is
+mathematically wrong.
 
-## Equivalence status
+## What is proved and what is not
 
-**Status: verifier-fail; semantic comparison not entered.**
+Dafny proves that the reference implementation meets the contract. It does
+not prove that the generated implementation meets it, because of the two
+index-safety failures. The generated program was not repaired and a second
+answer was not requested.
 
-The experiment's gate is to compare reference behavior only after a generated
-candidate passes Dafny. Although the intended recurrence closely follows the
-contract, an unverifiable attempt is not treated as a contract-conforming
-program and is not assigned an equivalence result. Repairing the two proof
-obligations could be a separate follow-up attempt, but doing so would not alter
-this recorded first-attempt outcome.
+The study compares behavior with the reference only when the generated answer
+passes verification. Consequently this case has no equivalence result. The
+similarity of the two algorithms is visible from the source, but it cannot be
+used as a substitute for the failed verification or as evidence that the two
+complete programs behave identically.
 
-## Reproduction
+## Reproduce
 
-From this repository root:
-
-```bash
-./reproduce.sh --case 002
-```
-
-The script treats the recorded `3 verified, 2 errors` result as an expected
-outcome and fails if it changes. Historical commands are preserved in
-`verification.txt`.
+Run `./reproduce.sh --case 002` from the repository root.

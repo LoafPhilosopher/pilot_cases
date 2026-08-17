@@ -1,116 +1,107 @@
-# Case 012: the false-promise branch exposes a raw-output counterexample
+# Case 012: selecting a majority candidate
 
-## Outcome
+The two programs always return the same value when the input promises a strict
+majority, but they are not equal on all permitted inputs: on `[0, 1, 2]` with
+the promise set to false, the generated program returns `0` and the reference
+program returns `2`.
 
-**Overall classification: `counterexample`.** The implementations are
-proved-equivalent when `promised`/`hasWinner` is true, but they are not
-equivalent for all formally permitted calls. With the ghost flag false, the
-following concrete input produces different raw candidates:
+## Problem given to the model
 
-```text
-values:     [0, 1, 2]
-generated:  0
-reference:  2
+This is DafnyBench ID313. `SegmentFrequency(values, 0, |values|, x)` counts how
+often `x` occurs in the complete nonempty sequence. The central interface was:
+
+```dafny
+method SelectCandidate<Choice(==)>(
+    values: seq<Choice>, ghost promised: bool,
+    ghost designated: Choice) returns (candidate: Choice)
+  requires |values| != 0
+  requires promised ==>
+    2 * SegmentFrequency(values, 0, |values|, designated) > |values|
+  ensures promised ==> candidate == designated
 ```
 
-The false flag makes the output postcondition vacuous, so both results conform
-to the shared contract. This is precisely why verifier-pass is not sufficient
-for raw-output equivalence here.
+The parameters `promised` and `designated` are ghost values, so they are used
+for verification but are erased from executable code. If `promised` is true,
+`designated` occurs in more than half of the sequence and the method must
+return it. If `promised` is false, the postcondition places no restriction on
+the returned candidate.
 
-## Sources compared
+This distinction is part of the callable interface rather than an invalid
+edge case. A caller may legally pass `promised=false` for any nonempty
+sequence, including one that has no majority. The comparison must therefore
+cover both settings when asking whether the complete methods always return the
+same value. A strict majority, when it exists, is unique because two different
+values cannot each occur more than half of the time.
 
-- DafnyBench ID313 at pinned commit
-  `0cd28feed9cd0179b07fdb9d002f8c39063658e4`;
-- hidden target `SearchForWinner` in
-  `third_party/DafnyBench/DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny2_MajorityVote.dfy`;
-- frozen target `SelectCandidate` in `generated_attempt_01.dfy`; and
-- proof/runtime artifact `comparison_harness.dfy`.
+The model did not receive the reference body. However, historical metadata in
+the platform context exposed the filename `MajorityVote.dfy`. It exposed no
+source code, and the model made no Web, filesystem, or tool calls. The result
+below remains a valid comparison of the two programs, but this case cannot show
+that changing method names removed every clue about the original task.
 
-The generated file has SHA-256
-`9ff9e8daaec0f438276f9027f7b332be2b5fe18eccb1a588eae37941e80210bb`.
-The pinned reference file has SHA-256
-`1d31d1d76157284fd04e9230f9818611c273efe2b2c90c5013a7a96f3028b57e`.
+## What the two programs do
 
-## Proved true-flag equivalence
-
-`FrequenciesAgree` proves that the masked `SegmentFrequency` and reference
-`Count` definitions are equal for every valid interval. The relational method
-`PromisedBranchAgree` then calls both actual implementations. Given a strict
-majority for `designated`, their public postconditions force both raw returns
-to equal `designated`.
-
-This proof is general over element type, sequence length, values, and the
-position of the majority value. It is not bounded testing.
-
-The combined result, including verification of both included source files, is:
+The reference program uses a cancellation-style majority search:
 
 ```text
-Dafny program verifier finished with 28 verified, 0 errors
+start with the first value as the current candidate
+scan a segment in which that candidate has a strict lead
+when the lead disappears, discard the segment
+if values remain, restart with the next value
+return the candidate of the final segment
 ```
 
-## Concrete false-flag counterexample
-
-The harness executes the exact included bodies on `[0,1,2]` with the flag false
-and records:
+The generated program takes a different approach:
 
 ```text
-Dafny program verifier finished with 5 verified, 0 errors
+initialize candidate to values[0]
+visit every element values[i]
+count its frequency in the complete sequence
+replace candidate only if values[i] is a strict majority
+return candidate
+```
+
+## Result
+
+For `promised=true`, the comparison first proves that the reference `Count`
+function and `SegmentFrequency` compute the same number. The precondition then
+says that `designated` is a strict majority, and both postconditions force the
+two calls to return exactly `designated`. This argument applies to every
+nonempty sequence and every element type supported by the methods.
+
+For `promised=false`, consider `[0,1,2]`. No value is a strict majority, so the
+generated program retains its initial candidate `0`. The reference starts
+with `0`. After seeing `1`, the current candidate loses its strict lead, and
+the remaining segment restarts at the last element, `2`. Execution prints:
+
+```text
 input:     [0, 1, 2]
 generated: 0
 reference: 2
 ```
 
-The output difference follows directly from their control flow:
-
-- The generated body initializes `candidate` to `values[0]` and replaces it
-  only with an element whose frequency is a strict majority of the complete
-  sequence. No element of `[0,1,2]` has such a majority, so it returns `0`.
-- The reference body starts with candidate `0`. At index 1, the different value
-  removes the candidate's strict lead over the current segment. Because one
-  value remains, it resets its candidate to `values[2]`, namely `2`, and then
-  terminates.
-
-The harness deliberately does not attach an exact-output postcondition to the
-runtime method. Dafny verifies contract conformance of the calls; the displayed
-values are an execution of the two concrete included programs, not a modular
-proof derivable from their vacuous false-flag postconditions.
-
-## Exact condition split
-
-There is no remaining `undetermined` branch in this comparison:
-
-- if the ghost promise is true and its majority precondition holds, raw-output
-  equality is proved for all inputs;
-- if the ghost promise is false, universal raw-output equality is refuted by
-  the concrete witness above.
-
-For the two current bodies, the ghost flag has no executable influence: all
-flag-dependent statements are proof-only. Therefore, if the sequence actually
-has a strict majority even when the caller passes false, both executions still
-return that unique majority (the same executable run could instead be called
-with a true ghost flag and that majority as `designated`). If no strict majority
-exists, the generated body returns the first element, whereas the reference
-returns its final cancellation-segment candidate; they agree exactly when that
-reference candidate equals the first element. These latter body-level facts
-come from source inspection, not from the false-flag contract.
-
-## Verification summary
-
-Using pinned Dafny 4.3.0:
+Dafny 4.3.0 reports:
 
 ```text
-Hidden reference:       16 verified, 0 errors
-Generated attempt:       7 verified, 0 errors
-Combined harness:       28 verified, 0 errors
-Runtime harness:         5 verified, 0 errors
+Reference program:    16 verified, 0 errors
+Generated program:     7 verified, 0 errors
+Combined comparison:  28 verified, 0 errors
+Counterexample run:     5 verified, 0 errors
 ```
 
-## Reproduction
+## What is and is not established
 
-From the repository root:
+Dafny proves equality for every input satisfying the true-promise condition.
+The printed false-promise results come from executing the two retained bodies.
+They cannot be derived from the false branch of the postcondition because that
+branch says nothing about `candidate`. The `5 verified` count checks that the
+comparison program and calls are legal. The numbers `0` and `2` are obtained
+by running the compiled bodies. The single input above is sufficient to
+disprove equality on all permitted calls. It does not claim that the programs
+differ on every sequence without a majority.
+
+## Reproduction
 
 ```bash
 ./reproduce.sh --case 012
 ```
-
-The exact commands and results are preserved in `verification.txt`.

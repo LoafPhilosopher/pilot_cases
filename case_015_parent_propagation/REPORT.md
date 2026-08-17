@@ -1,139 +1,111 @@
-# Case 015: propagating an aggregate change through a parent chain
+# Case 015: propagating a change through parent links
 
-## Outcome
+The reference loop and generated recursion add the same integer change once to
+each corresponding node from the receiver to the root, while preserving the
+tree structure and payloads. The final connection between this abstract proof
+and the two method bodies was checked manually, statement by statement.
 
-The untouched first generation passes Dafny.  Under the frozen heap-bijection
-observation, the reference loop and generated recursion have the same concrete
-effect: they add `change` once to each corresponding node on the receiver's
-finite predecessor chain and leave all other aggregate fields unchanged.
-Topology and payload fields are unchanged, and both methods establish their
-full validity predicates.
+## Problem given to the model
 
-Classification: **proved-equivalent under the frozen abstract heap relation,
-with an explicit inspected-body bridge**.  The relation and effect theorems are
-machine checked and unbounded.  Dafny's modular call rule cannot derive the
-per-node effect from the original public contracts, so the final connection
-from each retained body to the common effect is a line-by-line source check,
-not an end-to-end theorem about the two original method calls.  This boundary
-is important and is detailed below.
-
-The hidden source is DafnyBench ID482:
-
-`third_party/DafnyBench/DafnyBench/dataset/ground_truth/dafny-language-server_tmp_tmpkir0kenl_Test_vacid0_Composite.dfy`
-
-## Verification gate
-
-Using pinned Dafny 4.3.0, all three files pass without repair:
+This is DafnyBench ID482. Each node has two children, a parent called
+`predecessor` in the masked version, an integer payload, and an integer
+aggregate. A consistent node satisfies
 
 ```text
-Hidden reference:                        13 verified, 0 errors
-Generated attempt:                        4 verified, 0 errors
-Combined unit, including both sources:   34 verified, 0 errors
+aggregate = payload + left-child aggregate + right-child aggregate,
 ```
 
-The harness declarations alone account for `17 verified, 0 errors`; the
-combined count uses `--verify-included-files` so that both included source
-files are verified in the same command.
+with a missing child contributing zero. `ChainFinite(active)` says that the
+receiver and its successive parents form a finite chain inside `active`.
 
-The saved generation was compared only after its verifier-pass result.  The
-comparison did not edit `generated_attempt_01.dfy`, `input_masked.dfy`,
-`PROMPT.md`, or `PREGENERATION.md`.
+The target method can modify only aggregate fields in `active`. All other
+nodes are initially consistent, and the receiver's aggregate is short by
+exactly `change` relative to its payload and children. Its main contract is:
 
-## Frozen relation represented in the harness
+```dafny
+method PropagateUpdate(change: int,
+    ghost active: set<AggregateNode>,
+    ghost universe: set<AggregateNode>)
+  requires active <= universe && ChainFinite(active)
+  requires aggregate + change ==
+    payload +
+      (if childA == null then 0 else childA.aggregate) +
+      (if childB == null then 0 else childB.aggregate)
+  modifies active`aggregate
+  ensures forall node :: node in universe ==> node.Consistent(universe)
+```
 
-`comparison_harness.dfy` represents the cross-typed bijection as a finite map
-from hidden-reference `Composite` nodes to generated `AggregateNode` nodes.
-It requires that the map:
+The complete input also states the parent-child links and consistency of every
+other node. The reference body was hidden.
 
-- has exactly the two `universe` sets as domain and range and is injective;
-- maps the two receivers and membership in the two `active` sets;
-- preserves parent/predecessor and both child edges, including nullness;
-- preserves payload (`val`/`payload`) and initial aggregate (`sum`/`aggregate`)
-  values.
+## What the two programs do
 
-This is the full frozen observation relation.  It does not compare raw object
-identity, because the two heaps use different classes and allocations.
+The reference `Adjust` method is iterative:
 
-## What is directly machine checked about the actual calls
+```text
+p := receiver
+while p is not null
+    p.sum := p.sum + change
+    p := p.parent
+```
 
-`ContractsPreserveStructureAndValidity` calls the two retained methods on
-arbitrary related heaps satisfying all original preconditions.  Dafny proves,
-over the full frozen input domain, that:
+Its proof removes each visited node from a finite ghost set. The generated
+`PropagateUpdate` method is recursive:
 
-- the bijection still preserves topology and payload after both calls;
-- every reference node satisfies `Valid`; and
-- every generated node satisfies `Consistent`.
+```text
+save receiver.predecessor
+receiver.aggregate := receiver.aggregate + change
+prove the receiver and unrelated nodes remain consistent
+if the saved predecessor exists
+    recursively update it with active minus the receiver
+```
 
-The field-restricted modifies clauses are crucial: only `sum` or `aggregate`
-inside the respective active sets may change, so topology and payload cannot
-drift.
+Neither body changes a parent link, child link, or payload.
 
-The method deliberately does not claim post-call aggregate equality.  Both
-original contracts say only that all nodes are valid after the call.  They do
-not specify which modifiable active aggregates changed.  In particular, an
-`active` set may contain nodes unrelated to the receiver chain; modularly, a
-contract-compatible implementation could change such nodes if it could retain
-validity.  It would therefore be unsound to infer the exact effect from these
-postconditions alone.
+## Comparison and Dafny results
 
-## Unbounded path and effect proof
+The reference and generated heaps use different class types, so the comparison
+pairs their nodes one to one. Initially paired nodes must have matching
+parents, children, payloads, aggregates, and membership in the active sets.
 
-The harness separately machine checks three relational facts:
+Calling the actual methods is proved to preserve paired topology and payloads
+and to leave every node valid. A separate induction shows that the two
+receiver-to-root paths contain paired nodes in the same order. The final
+effect theorem states that every paired aggregate remains equal when the same
+`change` is added exactly on those paths and all other aggregates are left
+alone. These arguments apply to arbitrary finite parent chains rather than a
+fixed test tree.
 
-1. `UpPathsCorrespond` inducts over the finite active set and proves that the
-   reference parent path and generated predecessor path have equal length and
-   corresponding nodes at every index.
-2. `MappedPathsHaveSameMembership` proves that, under injectivity, a reference
-   node is on its path exactly when its generated image is on the other path.
-3. `CorrespondingPathEffectsPreserveValues` proves for arbitrary finite
-   universes and arbitrary path lengths that adding the same `change` exactly
-   on those paths preserves equality of every paired aggregate value.
+Dafny 4.3.0 reports:
 
-This theorem covers all nodes, including unrelated active nodes, and is not a
-toy scalar lemma or bounded test.
+```text
+Reference program:    13 verified, 0 errors
+Generated program:     4 verified, 0 errors
+Combined comparison:  34 verified, 0 errors
+```
 
-## Inspected-body bridge and its limit
+## What is and is not established
 
-The hidden body has one executable aggregate assignment inside its loop:
-`p.sum := p.sum + delta`.  It starts at the receiver, moves to `p.parent`, and
-stops at null.  Its decreasing set removes the current node, so the finite path
-contains no repeated update.
+The original postconditions say that all nodes are valid after the call, but
+they do not state exactly which modifiable aggregate fields changed. For this
+reason, Dafny cannot use the public contracts of the actual calls to prove
+post-call aggregate equality directly.
 
-The generated body likewise has one executable aggregate assignment per call:
-`aggregate := aggregate + change`.  It then recurses only on the saved
-`predecessor`, passing `active - {this}`, and stops when that pointer is null.
-All other statements in that body are proof-only assertions or local reads.
-Consequently each retained body satisfies the exact path-effect premise used
-by the relational theorem, and neither writes an unrelated aggregate.
+We connected the abstract path-effect theorem to the retained bodies by
+checking their executable statements. The reference has one aggregate write
+inside a loop that follows `parent`. The generated method has one aggregate
+write before a recursive call on `predecessor`. Their decreasing sets prevent
+a node from being updated twice, and neither method writes an aggregate off
+the path. Combining this source check with the Dafny path theorem gives equal
+aggregates for all paired nodes, along with equal topology and payloads.
 
-That last paragraph is a transparent source-code inspection, not something
-exposed by the methods' public `ensures` clauses.  If either body were replaced
-while keeping the same weak postcondition, the machine-checked effect harness
-alone would not certify aggregate equality.  A future stricter artifact
-could duplicate/instrument the bodies with strengthened effect postconditions
-or prove the effect in a refinement layer.  The present report therefore does
-not describe the combined harness as a single end-to-end machine proof.
-
-Combining the inspected effect with the machine-checked path theorem gives the
-frozen result: all paired aggregates remain equal, topology and payload remain
-corresponding, and both full validity predicates hold.  Raw allocation identity
-remains intentionally outside the observation relation.
-
-## Implementation comparison
-
-The reference uses an iterative cursor and a shrinking ghost termination set.
-The generation transforms the same state transition into structural recursion
-over `active - {this}` and supplies detailed assertions to re-establish
-validity around each recursive call.  The executable write/traversal semantics
-match even though the proof organization and control flow differ.
+The Dafny theorem covers the effect along paired parent paths. Matching that
+effect to each imperative body is the manual step. Nodes in the separately
+allocated heaps correspond through the stated one-to-one pairing; their raw
+object addresses are outside this comparison.
 
 ## Reproduction
-
-From the repository root:
 
 ```bash
 ./reproduce.sh --case 015
 ```
-
-The exact commands and outputs used for this report are retained in
-`verification.txt`.

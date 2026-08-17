@@ -1,99 +1,110 @@
-# Case 014: maximum pairwise-distinct window
+# Case 014: longest substring without repeated characters
 
-## Outcome
+The reference and generated programs return the same maximum length for every
+input string. Dafny also proves that their ghost interval endpoints match when
+the maximizing interval is unique; the current proof and the two contracts do
+not determine what happens to those endpoints when maxima tie.
 
-The untouched first generation passes Dafny.  Its primary executable result is
-proved equal to the hidden reference result for every input string:
+## Problem given to the model
 
-```text
-Dafny program verifier finished with 13 verified, 0 errors
+This is DafnyBench ID417. A span is a half-open interval `[start,end)`. It is
+admissible when it lies inside the string and no two positions in it contain
+the same character. The model received the following specification, with the
+method body removed:
+
+```dafny
+ghost predicate IsAdmissible(text: string, span: Span) {
+  0 <= span.0 <= span.1 <= |text| &&
+  (forall i, j | span.0 <= i < j < span.1 :: text[i] != text[j])
+}
+
+method SelectDistinctWindow(text: string)
+    returns (size: int, ghost chosen: Span)
+  ensures IsAdmissible(text, chosen) && chosen.1 - chosen.0 == size
+  ensures forall candidate | IsAdmissible(text, candidate) ::
+    candidate.1 - candidate.0 <= size
 ```
 
-Classification for the frozen primary observation: **proved-equivalent**.  The
-returned integer is the unique maximum admissible-window length, even when the
-input has several different maximizing windows.
+Thus `chosen` must describe a substring with distinct characters, `size` must
+be its length, and no other admissible span may be longer. The endpoints are
+ghost data used for the proof and are not part of the compiled result.
 
-The secondary `ghost` span needs a separate qualification.  Both contracts
-allow any maximizing span.  The harness proves endpoint equality when the
-maximizing span is unique; the contracts alone do not imply endpoint equality
-when there is a tie.  This ghost freedom is not an executable-output
-difference.
+The integer result is uniquely determined even if several spans reach the
+maximum: all maximum spans have the same length. The ghost result is different
+because the specification asks only for one maximizing witness and gives no
+tie-breaking rule. Separating these two returns is necessary when deciding
+what the comparison proves.
 
-The hidden source is DafnyBench ID417:
+## What the two programs do
 
-`third_party/DafnyBench/DafnyBench/dataset/ground_truth/dafleet_tmp_tmpa2e4kb9v_0001-0050_0003-longest-substring-without-repeating-characters.dfy`
-
-## Verification gate
-
-Using pinned Dafny 4.3.0, all three files pass without repair:
+The reference program uses a sliding window:
 
 ```text
-Hidden reference:                         4 verified, 0 errors
-Generated attempt:                        4 verified, 0 errors
-Combined unit, including both sources:   13 verified, 0 errors
+keep a current interval [lo,hi) and its set of characters
+extend hi when the next character is new
+otherwise move lo right until extension is possible
+record a new best interval only when its length strictly increases
+return the best length and ghost interval
 ```
 
-The harness declarations alone account for `5 verified, 0 errors`; the
-combined count uses `--verify-included-files` so that both included source
-files are verified in the same command.
-
-The saved generation was compared only after its verifier-pass result.  The
-comparison did not edit `generated_attempt_01.dfy`, `input_masked.dfy`,
-`PROMPT.md`, or `PREGENERATION.md`.
-
-## Primary relational proof
-
-The reference and generated programs use nominally different subset types and
-predicate names, so `comparison_harness.dfy` first proves that conversion of
-the two endpoint pairs preserves validity and length.  It then calls both
-actual methods on the same string.
-
-Let the reference return length `r` and the generation return `g`.  The
-generated witness is a valid reference interval, so reference maximality gives
-`g <= r`.  Conversely, the reference witness is an admissible generated span,
-so generated maximality gives `r <= g`.  Dafny therefore proves `r == g` for an
-arbitrary string.  This is an unbounded contract-level proof, not finite
-testing and not a comparison with a few expected outputs.
-
-## Ghost span and tie handling
-
-The harness also proves the conditional statement:
+The generated program exhaustively examines candidate spans:
 
 ```text
-if every valid interval of maximum length equals the reference witness,
-then the reference and generated endpoints are equal.
+for each possible left endpoint
+    for each possible right endpoint
+        test whether all characters in [left,right) are distinct
+        record it only if it is longer than the current best
+return the recorded length and ghost span
 ```
 
-Without that uniqueness premise, exact endpoints are underdetermined by both
-public contracts.  For example, `"abba"` has two length-two admissible spans,
-`[0,2)` and `[2,4)`.  Either one satisfies the declared result relation.
+The generated algorithm is less efficient, but its nested-loop invariants
+prove that every already examined admissible span is no longer than the saved
+one.
 
-Inspection of the actual bodies suggests the endpoints agree even on ties:
-the reference scans right endpoints in increasing order and replaces its
-witness only on a strict improvement; the generated body enumerates left
-endpoints in increasing order and likewise replaces only on a strict
-improvement.  For equal maximum lengths, earliest right endpoint and earliest
-left endpoint identify the same span.  This tie-breaking observation is a
-source-code argument, not a consequence proved by the combined harness, so it
-is not used to upgrade the primary result or to claim unconditional declared-
-tuple equality.
+For example, on `"abcabcbb"` both methods must return length `3`. The reference
+reaches this result while moving one window through the string in a single
+left-to-right scan. The generated method reaches it after considering all
+endpoint pairs. The comparison does not depend on this example. Its proof
+covers an arbitrary string and does not assume a fixed alphabet.
 
-## Implementation comparison
+## Result
 
-The reference is a linear sliding-window algorithm with a character set.  The
-generation independently uses nested enumeration plus a quantified
-`RangeDistinct` function, making it asymptotically slower but still fully
-verified.  Their algorithmic structures are materially different; the public
-maximum contracts, rather than syntactic similarity, establish equality of
-the executable integer.
+The comparison maps the reference interval type and generated span type by
+copying their two endpoints. It proves that this conversion preserves both
+admissibility and length, then calls the two actual methods on an arbitrary
+string. Let their returned lengths be `r` and `g`. The generated witness is a
+valid reference interval, so reference maximality gives `g <= r`. The
+reference witness is also a valid generated span, so generated maximality
+gives `r <= g`. Dafny therefore proves `r == g` without enumerating strings.
+
+Dafny 4.3.0 reports:
+
+```text
+Reference program:     4 verified, 0 errors
+Generated program:     4 verified, 0 errors
+Combined comparison:  13 verified, 0 errors
+```
+
+## Ghost endpoints and ties
+
+Maximum length does not always identify one interval. For example, `"abba"`
+has two admissible spans of maximum length two: `[0,2)` is `"ab"`, and `[2,4)`
+is `"ba"`. The contracts permit either witness. The comparison proves equal
+endpoints if the maximum span is unique, but it cannot obtain unconditional
+endpoint equality from these contracts.
+
+Inspection suggests that the retained bodies both keep the first maximum they
+encounter, including on tied inputs such as `"abba"`. That tie-breaking claim
+is not proved by the current comparison method, and no differing endpoint
+example was observed for these two implementations. The unconditional result
+is equality of the executable integer. The current proof additionally gives
+endpoint equality when the maximum is unique; with ties, it proves neither
+equality nor a difference for the two retained bodies. The specification would
+permit another verified implementation to return a different tied span while
+preserving the same maximum length.
 
 ## Reproduction
-
-From the repository root:
 
 ```bash
 ./reproduce.sh --case 014
 ```
-
-The exact commands and outputs used for this report are retained in
-`verification.txt`.
