@@ -14,10 +14,10 @@ The script:
 1. downloads the official Dafny 4.3.0 Ubuntu 20.04 x64 archive;
 2. verifies its SHA-256 digest;
 3. checks out DafnyBench at the exact recorded commit;
-4. verifies the pilot, extension-freeze, extension-result, and repair artifact
-   checksums, checks the bytewise repair chains, and then reruns the heuristic
-   text scan for forbidden constructs on both first attempts and saved repair
-   outputs;
+4. checks the bytewise repair chains, reconstructs every repair prompt, replays
+   each Round 01 verifier feedback file, verifies all four artifact checksum
+   manifests, and then reruns the heuristic text scan for forbidden constructs
+   on both first attempts and saved repair outputs;
 5. reruns every reference, all 15 first attempts, and each first-attempt
    post-gate comparison;
 6. reproduces every saved repair round for cases 002, 009, 010, and 013,
@@ -42,6 +42,19 @@ first attempt and that each saved raw response is exactly the program sent to
 Dafny. For Case 009, they also confirm that the Round 01 output became the Round
 02 input and that the Round 01 verification log became the Round 02 verifier
 feedback.
+
+For every saved repair prompt, the script extracts the Dafny program and
+verifier-feedback blocks and compares them byte for byte with that round's
+saved input files. It also reconstructs the complete prompt from a fixed
+instruction template and compares the whole file, so added instructions or
+other text outside the two blocks cause the check to fail.
+
+The four Round 01 feedback files are independently recreated by running Dafny
+4.3.0 from the corresponding round directory on `input_program.dfy`, with the
+recorded two-worker setting. The script compares both the exit code and the
+complete combined verifier output byte for byte with `verifier_feedback.txt`.
+Round 02 of Case 009 is already closed by the chain check: its feedback is the
+complete saved Round 01 output verification.
 
 The script then verifies the already saved repair history; it does not call an
 agent or generate new repair code. Case 002 passes in round 1 (`4 verified, 0
@@ -69,7 +82,8 @@ artifact; it does not turn that attempt into a protocol-conforming sample.
 - DafnyBench commit:
   `0cd28feed9cd0179b07fdb9d002f8c39063658e4`
 
-Automatic setup requires `bash`, `cmp`, `curl`, `git`, `unzip`, and `sha256sum`.
+Automatic setup requires `awk`, `bash`, `cmp`, `curl`, `git`, `unzip`, and
+`sha256sum`.
 Python 3 is required for the five runtime counterexamples. Downloaded
 dependencies are stored in ignored directories `.tools/` and
 `third_party/`; each reproduction run receives a new timestamped directory
@@ -109,6 +123,8 @@ DAFNYBENCH_DIR=/absolute/path/to/DafnyBench \
 The setup script verifies both supplied versions before running.
 Verification uses two solver workers by default to remain predictable on
 shared machines. Set `DAFNY_CORES` to another positive integer if needed.
+The exact Round 01 feedback replay always uses the recorded two-worker setting;
+`DAFNY_CORES` controls the other verification and runtime checks.
 
 ## Historical command records
 

@@ -50,6 +50,10 @@ command -v cmp >/dev/null 2>&1 || {
   echo "error: cmp is required for repair provenance checks" >&2
   exit 1
 }
+command -v awk >/dev/null 2>&1 || {
+  echo "error: awk is required for repair prompt checks" >&2
+  exit 1
+}
 
 require_bytewise_equal() {
   local label="$1"
@@ -115,6 +119,148 @@ check_repair_chains() {
   require_bytewise_equal "013 round 01 raw response -> output" \
     "$case_013/repair/round_01/raw_response.txt" \
     "$case_013/repair/round_01/output_program.dfy"
+}
+
+extract_repair_prompt_blocks() {
+  local prompt="$1"
+  local program_out="$2"
+  local feedback_out="$3"
+
+  : >"$program_out"
+  : >"$feedback_out"
+  if ! awk -v program_out="$program_out" -v feedback_out="$feedback_out" '
+    BEGIN { state = 0; fences = 0; bad = 0 }
+    /^```/ {
+      fences++
+      if (state == 0 && $0 == "```dafny") { state = 1; next }
+      if (state == 1 && $0 == "```")      { state = 2; next }
+      if (state == 2 && $0 == "```text")  { state = 3; next }
+      if (state == 3 && $0 == "```")      { state = 4; next }
+      bad = 1
+      next
+    }
+    state == 1 { print $0 > program_out; next }
+    state == 3 { print $0 > feedback_out; next }
+    state == 4 { bad = 1 }
+    END {
+      close(program_out)
+      close(feedback_out)
+      if (bad || state != 4 || fences != 4) {
+        print "invalid repair prompt fence structure" > "/dev/stderr"
+        exit 1
+      }
+    }
+  ' "$prompt"; then
+    echo "error: could not extract the two canonical blocks from $prompt" >&2
+    exit 1
+  fi
+}
+
+build_expected_repair_prompt() {
+  local round_number="$1"
+  local program="$2"
+  local feedback="$3"
+  local output="$4"
+
+  {
+    printf '# Repair Round %s\n\n' "$round_number"
+    printf '%s\n' \
+      'You are repairing a Dafny program after verifier failure. Use only the current' \
+      'program and Dafny feedback below. Do not call tools, browse or search the Web,' \
+      'inspect the filesystem, or contact another agent.'
+    printf '\n'
+    printf '%s\n' \
+      'Return exactly one complete Dafny source file as plain text. Do not use Markdown' \
+      'fences and do not add any explanation before or after the source.'
+    printf '\n'
+    printf '%s\n' \
+      'Preserve all existing type and member declarations, method signatures,' \
+      'preconditions, postconditions, frame clauses, and specification definitions.' \
+      'Do not weaken or delete the contract. You may change executable bodies, proof' \
+      'annotations, loop invariants, and helper bodies as needed. Do not use `assume`,' \
+      '`{:verify false}`, `{:axiom}`, `{:extern}`, or `decreases *`.'
+    printf '\n## Current program\n\n```dafny\n'
+    sed -n '1,$p' "$program"
+    printf '```\n\n## Dafny 4.3.0 feedback\n\n```text\n'
+    sed -n '1,$p' "$feedback"
+    printf '```\n'
+  } >"$output"
+}
+
+check_one_repair_prompt() {
+  local label="$1"
+  local round_number="$2"
+  local round_dir="$3"
+  local work_dir="$runtime_dir/repair-provenance/$label"
+  local extracted_program="$work_dir/program.dfy"
+  local extracted_feedback="$work_dir/feedback.txt"
+  local expected_prompt="$work_dir/expected_prompt.md"
+
+  mkdir -p "$work_dir"
+  extract_repair_prompt_blocks \
+    "$round_dir/repair_prompt.md" "$extracted_program" "$extracted_feedback"
+  require_bytewise_equal "$label prompt program block" \
+    "$extracted_program" "$round_dir/input_program.dfy"
+  require_bytewise_equal "$label prompt feedback block" \
+    "$extracted_feedback" "$round_dir/verifier_feedback.txt"
+  build_expected_repair_prompt \
+    "$round_number" "$round_dir/input_program.dfy" \
+    "$round_dir/verifier_feedback.txt" "$expected_prompt"
+  require_bytewise_equal "$label complete prompt" \
+    "$expected_prompt" "$round_dir/repair_prompt.md"
+}
+
+check_repair_prompts() {
+  check_one_repair_prompt "002-round-01" "01" \
+    "$root/case_002_local_transition_trace/repair/round_01"
+  check_one_repair_prompt "009-round-01" "01" \
+    "$root/case_009_local_array_repair/repair/round_01"
+  check_one_repair_prompt "009-round-02" "02" \
+    "$root/case_009_local_array_repair/repair/round_02"
+  check_one_repair_prompt "010-round-01" "01" \
+    "$root/case_010_in_place_chain_reversal/repair/round_01"
+  check_one_repair_prompt "013-round-01" "01" \
+    "$root/case_013_undo_log_recovery/repair/round_01"
+}
+
+replay_round_01_feedback() {
+  local label="$1"
+  local expected_exit="$2"
+  local round_dir="$3"
+  local work_dir="$runtime_dir/repair-provenance/$label"
+  local body="$work_dir/dafny_output.txt"
+  local replayed="$work_dir/replayed_feedback.txt"
+  local actual_exit
+
+  mkdir -p "$work_dir"
+  if (cd "$round_dir" && \
+      "$dafny_bin" verify --cores 2 input_program.dfy) >"$body" 2>&1; then
+    actual_exit=0
+  else
+    actual_exit=$?
+  fi
+  if [[ "$actual_exit" -ne "$expected_exit" ]]; then
+    echo "error: $label replay returned exit $actual_exit; expected $expected_exit" >&2
+    sed -n '1,240p' "$body" >&2
+    exit 1
+  fi
+  {
+    printf 'Exit code: %s\n\n' "$actual_exit"
+    sed -n '1,$p' "$body"
+  } >"$replayed"
+  require_bytewise_equal "$label replayed verifier feedback" \
+    "$replayed" "$round_dir/verifier_feedback.txt"
+}
+
+check_round_01_feedback() {
+  replay_round_01_feedback "002-round-01" 4 \
+    "$root/case_002_local_transition_trace/repair/round_01"
+  replay_round_01_feedback "009-round-01" 4 \
+    "$root/case_009_local_array_repair/repair/round_01"
+  replay_round_01_feedback "010-round-01" 2 \
+    "$root/case_010_in_place_chain_reversal/repair/round_01"
+  replay_round_01_feedback "013-round-01" 4 \
+    "$root/case_013_undo_log_recovery/repair/round_01"
 }
 
 "$root/scripts/setup_dependencies.sh"
@@ -471,14 +617,20 @@ run_archive_771() {
   run_ok "archive-771-combined" "Dafny program verifier finished with 14 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" --verify-included-files "$case_dir/comparison_harness.dfy"
 }
 
+echo "== repair provenance chains"
+check_repair_chains
+
+echo "== repair prompt contents"
+check_repair_prompts
+
+echo "== round 01 verifier feedback replay"
+check_round_01_feedback
+
 echo "== provenance checksums"
 (cd "$root" && sha256sum -c provenance/SHA256SUMS)
 (cd "$root" && sha256sum -c provenance/extension_freeze_SHA256SUMS)
 (cd "$root" && sha256sum -c provenance/extension_results_SHA256SUMS)
 (cd "$root" && sha256sum -c provenance/repair_SHA256SUMS)
-
-echo "== repair provenance chains"
-check_repair_chains
 
 echo "== heuristic forbidden-feature scan"
 forbidden='assume|\{:[[:space:]]*(verify[[:space:]]+false|axiom|extern)|decreases[[:space:]]+\*|(^|[^[:alnum:]_])print([[:space:](;]|$)'
