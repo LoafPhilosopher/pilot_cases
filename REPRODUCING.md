@@ -14,24 +14,38 @@ The script:
 1. downloads the official Dafny 4.3.0 Ubuntu 20.04 x64 archive;
 2. verifies its SHA-256 digest;
 3. checks out DafnyBench at the exact recorded commit;
-4. verifies the pilot, extension-freeze, and extension-result artifact
-   checksums and reruns the recorded heuristic text scan for forbidden
-   constructs;
-5. reruns every reference, all 15 generated attempts, and each available
-   post-gate comparison; and
-6. executes the concrete counterexamples for cases 001, 003, and 012.
+4. verifies the pilot, extension-freeze, extension-result, and repair artifact
+   checksums and reruns the heuristic text scan for forbidden constructs on
+   both first attempts and saved repair outputs;
+5. reruns every reference, all 15 first attempts, and each first-attempt
+   post-gate comparison;
+6. reproduces every saved repair round for cases 002, 009, 010, and 013,
+   then checks each final repair comparison; and
+7. executes the concrete counterexamples for cases 001, 003, 009, 010,
+   and 012.
 
-Cases 002, 009, 010, and 013 are recorded failures. Reproduction succeeds only
-when their saved first attempts reproduce the recorded diagnostics, rather
-than merely returning a nonzero exit code. Case 002 has `3 verified, 2 errors`.
-Case 009 has `5 verified, 1 error` and must report at `(51,15)` that the array
-element assignment may update outside the enclosing modifies clause. Case 010
-must report exactly 17 occurrences of Dafny 4.3.0's diagnostic
+Cases 002, 009, 010, and 013 are recorded first-attempt failures.
+Reproduction succeeds only when those attempts reproduce the recorded
+diagnostics, rather than merely returning a nonzero exit code. Case 002 has
+`3 verified, 2 errors`. Case 009 has `5 verified, 1 error` and must report at
+`(51,15)` that the array element assignment may update outside the enclosing
+modifies clause. Case 010 must report exactly 17 occurrences of Dafny 4.3.0's
+diagnostic
 `Error: type seq<T> does not have a member Length`, together with its recorded
 17-error resolution summary. Case 013 has `6 verified, 2 errors`, and both
 modifies-clause diagnostics must occur at `(226,12)` and `(307,11)`. Thus an
-unrelated failure with the same error count is rejected. The script does not
-repair or silently drop any attempt.
+unrelated failure with the same error count is rejected.
+
+The script then verifies the already saved repair history; it does not call an
+agent or generate new repair code. Case 002 passes in round 1 (`4 verified, 0
+errors`). Case 009 still fails in round 1 at its saved assertion (`5 verified,
+1 error`) and passes in round 2 (`6 verified, 0 errors`). Cases 010 and 013 pass
+in round 1 with `8 verified, 0 errors` and `7 verified, 0 errors`, respectively.
+Only those final passing programs are used by the repair comparison harnesses.
+Their recorded verification summaries are 12/0 for case 002, 13/0 for case
+009, 15/0 for case 010, and 50/0 for case 013. Executing the case 009 and 010
+harnesses also checks their concrete behavioral differences from the pinned
+reference implementations.
 
 Case 006 verifies, but its generation log records one prohibited outbound
 progress call before the final code response. Reproduction checks the Dafny
@@ -49,7 +63,7 @@ artifact; it does not turn that attempt into a protocol-conforming sample.
   `0cd28feed9cd0179b07fdb9d002f8c39063658e4`
 
 Automatic setup requires `bash`, `curl`, `git`, `unzip`, and `sha256sum`.
-Python 3 is required for the three runtime counterexamples. Downloaded
+Python 3 is required for the five runtime counterexamples. Downloaded
 dependencies are stored in ignored directories `.tools/` and
 `third_party/`; each reproduction run receives a new timestamped directory
 under `.repro/runs/`.
@@ -62,7 +76,7 @@ Run one active case (001 through 015):
 ./reproduce.sh --case 004
 ```
 
-Skip the three runtime counterexamples while retaining all formal verification:
+Skip the five runtime counterexamples while retaining all formal verification:
 
 ```bash
 ./reproduce.sh --skip-runtime

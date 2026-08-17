@@ -5,7 +5,9 @@
 The ten cases below were selected and frozen before generation at Git commit
 `8b6218c8cc8d235adf24f3c9832a4d70de302983`. Each received exactly one
 `gpt-5.6-sol` first attempt at `ultra` reasoning effort. No verifier-driven
-retry, repair, replacement, or extra generation was made.
+retry, repair, replacement, or extra generation was made during this original
+run. A later, separately recorded repair study was applied only to the three
+extension failures (009, 010, and 013); see [`CONCLUSION.md`](CONCLUSION.md).
 
 This extension operationalizes the advisor-guided 10–20-task direction, but
 is reported as exploratory evidence rather than an advisor-approved benchmark
@@ -50,9 +52,10 @@ from a non-unique ghost witness. Conversely, Cases 007, 011, and 015 show that
 two materially different proof or control-flow organizations can still realize
 the same frozen observation.
 
-The three failures are retained as outcomes rather than repaired away. Two are
-heap-frame failures after the model inferred a plausible algorithm, and one is
-a Dafny syntax/type error. With only ten tasks and one sample per task, these
+The three failures remain the first-attempt outcomes. Two are heap-frame
+failures after the model inferred a plausible algorithm, and one is a Dafny
+syntax/type error. Their original files and logs were not changed by the later
+repair study. With only ten tasks and one sample per task, these first-attempt
 counts are descriptive evidence for this frozen set, not an estimate of broad
 model performance.
 

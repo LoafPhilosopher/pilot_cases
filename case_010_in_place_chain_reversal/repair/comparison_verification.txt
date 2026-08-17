@@ -1,0 +1,27 @@
+Comparison target: repair/round_01/output_program.dfy
+Reference: pinned DafnyBench ID308 implementation with class/member names
+translated through the frozen mapping in PREGENERATION.md; only formatting and
+local-variable names differ otherwise
+Dafny version: 4.3.0
+
+Command:
+  .tools/dafny-4.3.0/dafny/dafny verify --cores 2 --verify-included-files case_010_in_place_chain_reversal/repair/comparison_harness.dfy
+Exit code: 0
+
+Dafny program verifier finished with 15 verified, 0 errors
+
+Command:
+  .tools/dafny-4.3.0/dafny/dafny run --cores 2 --verify-included-files case_010_in_place_chain_reversal/repair/comparison_harness.dfy -t:py
+Exit code: 0
+
+Dafny program verifier finished with 15 verified, 0 errors
+input values: [1, 2]
+abstract returned sequences agree: [2, 1]
+reference returns old tail: true
+repaired returns old head: true
+reference returned successor is old head: true
+repaired returned successor is old tail: true
+reference old-head value / old-tail value: 1 / 2
+repaired old-head value / old-tail value: 2 / 1
+reference old-head successor is null: true
+repaired old-head successor is old tail: true

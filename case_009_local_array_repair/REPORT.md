@@ -1,19 +1,21 @@
-# Case 009: one-step repair of a max-heap array
+# Case 009: local repair of a max-heap array
 
-**Result: the generated program does not verify. Dafny reports one error on
-its array update, so no equivalence claim is made.**
+**Repair outcome: Round 02 verifies, but the repaired program is not
+behaviorally equivalent to the reference.** On the legal one-element input
+`[7]`, the reference leaves the array as `[7]`, whereas the repaired program
+changes it to `[0]`; both return `-1`. The specification permits this difference
+because it does not preserve the input values or their multiset and does not
+require updates to be limited to one local swap.
 
 ## Problem and specification
 
-This task is DafnyBench ID288. An integer array represents a binary tree: the
-children of position `i` are `2*i+1` and `2*i+2` when those indices exist.
-`GloballyOrdered` means every parent is at least as large as each child, which
-is the max-heap property.
+An integer array represents a binary tree. The children of position `i` are
+`2*i+1` and `2*i+2` when those positions exist. `GloballyOrdered` states the
+max-heap property: every parent is at least as large as each child.
 
-The input is already ordered everywhere except possibly at one position. The
-method performs one local repair step and returns either `-1`, meaning the
-whole array is now ordered, or a later array position at which the only
-remaining local problem may occur. In simplified form, the contract is:
+The input is ordered everywhere except possibly at `position`. The method must
+perform a repair and return either `-1`, meaning the whole array is ordered, or
+a later position at which the only remaining violation may occur:
 
 ```dafny
 method RepairAt(position: int) returns (next: int)
@@ -26,57 +28,73 @@ method RepairAt(position: int) returns (next: int)
     OrderedAwayFrom(this.data[..], next)
 ```
 
-`OrderedAwayFrom` contains the source program's exact quantified conditions,
-including two boundary conditions involving the parent of `position`; it was
-not replaced with a more conventional heap predicate.
+These postconditions constrain the final heap property and `next`, but say
+nothing about which input values must remain in the array.
 
-## Reference and generated algorithms
+## Reference, first attempt, and repair rounds
 
-The reference examines the node at `position` and its children. If there are
-no children, it returns `-1`. Otherwise it finds the largest among the current
-node and its existing children. If the current node is already largest, it
-returns `-1`; if a child is larger, it swaps that child with the current node
-and returns the child's index. This is one downward repair step, not a complete
-recursive heapification.
+The reference performs one local step. It compares `position` with its existing
+children. If the current value is already largest, or if there are no children,
+it returns `-1` without changing the array. Otherwise it swaps the current
+value with the larger child and returns that child's position.
 
-The generated program takes a very different approach. It loops over the
-entire array, attempts to replace every value with zero, and then returns
-`-1`. An all-zero array would satisfy `GloballyOrdered`, and the contract does
-not require preservation of the input values or their multiset. The idea
-therefore exposes freedom in the written specification, but the submitted
-code still has to verify before it can count as a valid implementation.
+The first generated program tried to write zero into every array element and
+then return `-1`. Its intended all-zero post-state is a max heap, but Dafny
+rejected the array update under the loop's frame information. This first
+program remains unchanged in `generated_attempt_01.dfy`.
 
-## Exact verification result
+The repair process retained that algorithm and changed its proof and framing:
 
-The reference program verifies with `6 verified, 0 errors`. Dafny 4.3.0 gives
-the generated program `5 verified, 1 error` and points to the assignment in
-its loop:
+| Program | Dafny 4.3.0 result | Outcome |
+|---|---:|---|
+| First generation | 5 verified, 1 error | Array update not justified by the enclosing frame |
+| Repair Round 01 | 5 verified, 1 error | Could not prove `target == this.data` |
+| Repair Round 02 | 6 verified, 0 errors | Final verifier-passing repair |
 
-```text
-generated_attempt_01.dfy(51,15): Error: assignment might update an
-array element not in the enclosing context's modifies clause
+Only Round 02 is compared with the reference. The two programs that do not
+verify are retained as repair history, not treated as implementations for the
+equivalence result.
 
-51 |       this.data[i] := 0;
-   |                ^
-```
+## Concrete counterexample
 
-Thus Dafny does not establish that the generated method is permitted to carry
-out the array update in that loop. The output was kept as the first response;
-it was not repaired or replaced.
+Take a one-element array whose only value is `7`, with `position = 0`. Both
+`OrderedAwayFrom` preconditions hold because the element has no children. The
+actual methods produce:
 
-## What is and is not established
+| Observation | Reference | Repair Round 02 |
+|---|---:|---:|
+| Final array contents | `[7]` | `[0]` |
+| Returned `next` | `-1` | `-1` |
+| Field still aliases its original input array | `true` | `true` |
 
-There is no generated-versus-reference equivalence result for this case. In
-particular, the failed source does not prove that the all-zero strategy
-satisfies the contract, nor does it establish the post-state or returned value
-of a valid generated program. It only suggests a possible under-specification:
-the postconditions describe heap ordering but do not preserve array contents.
-A repaired version was intentionally not tested, so that suggestion remains
-separate from the recorded generation result.
+The comparison chosen before repair requires both executions to retain their
+original input-array aliases, produce equal complete array contents, and return
+equal `next` values. This example does not meet that comparison. Alias
+identity and `next` agree here, but the contents do not. The weaker relation
+that compares only `(data[..], next)` also fails for the same reason.
+
+The combined harness verifies with `13 verified, 0 errors`, including both
+programs and the legal calls. Running it prints the values in the table above.
+The exact output is in `repair/comparison_verification.txt`. Because the public
+contracts do not determine the post-state contents, the concrete contents are
+established by executing the included method bodies, not by a modular
+relational proof from their postconditions.
+
+## Missing specification
+
+The contract would need additional postconditions to rule out the all-zero
+repair. At minimum, it should require the output to preserve the multiset of
+input values. To specify the reference behavior more closely, it should also
+state that the array is unchanged when `next == -1`, and otherwise only
+`position` and `next` change and their old values are swapped. An array-identity
+postcondition would additionally make preservation of the caller's original
+array alias explicit. None of these properties follows from the current
+contract.
 
 ## Reproduce
 
-From the repository root:
+From the repository root, reproduce the first attempt, both repair rounds, and
+the comparison with:
 
 ```bash
 ./reproduce.sh --case 009

@@ -38,9 +38,12 @@ Run the public artifact integrity check from the repository root:
 sha256sum -c provenance/SHA256SUMS
 sha256sum -c provenance/extension_freeze_SHA256SUMS
 sha256sum -c provenance/extension_results_SHA256SUMS
+sha256sum -c provenance/repair_SHA256SUMS
 ```
 
 The extension freeze checksum covers the exact pre-generation task set,
 prompts, and observation decisions. The extension results checksum separately
 covers generated outputs, reports, comparison harnesses, verification records,
-result metadata, and the standalone reproduction entry points.
+result metadata, and the standalone reproduction entry points. The repair
+checksum covers the fixed protocol, every saved repair round, the four final
+comparisons, and the updated case reports and conclusion.

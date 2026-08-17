@@ -63,7 +63,8 @@ echo "Dafny cores: $dafny_cores"
 
 if [[ $skip_runtime -eq 0 &&
       ("$selected" == "all" || "$selected" == "001" ||
-       "$selected" == "003" || "$selected" == "012") ]]; then
+       "$selected" == "003" || "$selected" == "009" ||
+       "$selected" == "010" || "$selected" == "012") ]]; then
   command -v python3 >/dev/null 2>&1 || {
     echo "error: python3 is required for runtime counterexamples; use --skip-runtime to omit them" >&2
     exit 1
@@ -155,6 +156,26 @@ stage_runtime_case() {
   echo "$staged_case/comparison_harness.dfy"
 }
 
+stage_repair_runtime_case() {
+  local id="$1"
+  local case_dir="$2"
+  local round="$3"
+  local reference_rel="${4:-}"
+  local stage="$runtime_dir/$id-repair"
+  local staged_repair="$stage/$case_dir/repair"
+
+  mkdir -p "$staged_repair/$round"
+  cp "$root/$case_dir/repair/comparison_harness.dfy" "$staged_repair/"
+  cp "$root/$case_dir/repair/$round/output_program.dfy" \
+    "$staged_repair/$round/"
+  if [[ -n "$reference_rel" ]]; then
+    local staged_reference="$stage/third_party/DafnyBench/$reference_rel"
+    mkdir -p "$(dirname "$staged_reference")"
+    cp "$benchmark_dir/$reference_rel" "$staged_reference"
+  fi
+  echo "$staged_repair/comparison_harness.dfy"
+}
+
 run_runtime_001() {
   if [[ $skip_runtime -eq 1 ]]; then
     return 0
@@ -197,6 +218,44 @@ run_runtime_012() {
   grep -Fq 'reference: 2' "$logs_dir/012-runtime.log"
 }
 
+run_repair_runtime_009() {
+  if [[ $skip_runtime -eq 1 ]]; then
+    return 0
+  fi
+  local reference_rel="DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_algorithms and leetcode_heap2.dfy"
+  local staged
+  staged="$(stage_repair_runtime_case 009 case_009_local_array_repair round_02 "$reference_rel")"
+  run_ok "009-repair-runtime" "Dafny program verifier finished with 1 verified, 0 errors" \
+    "$dafny_bin" run --cores "$dafny_cores" "$staged" -t:py
+  grep -Fq 'initial contents:       [7]' "$logs_dir/009-repair-runtime.log"
+  grep -Fq 'reference contents:     [7]' "$logs_dir/009-repair-runtime.log"
+  grep -Fq 'repaired contents:      [0]' "$logs_dir/009-repair-runtime.log"
+  grep -Fq 'reference next:         -1' "$logs_dir/009-repair-runtime.log"
+  grep -Fq 'repaired next:          -1' "$logs_dir/009-repair-runtime.log"
+  grep -Fq 'reference alias kept:   true' "$logs_dir/009-repair-runtime.log"
+  grep -Fq 'repaired alias kept:    true' "$logs_dir/009-repair-runtime.log"
+}
+
+run_repair_runtime_010() {
+  if [[ $skip_runtime -eq 1 ]]; then
+    return 0
+  fi
+  local staged
+  staged="$(stage_repair_runtime_case 010 case_010_in_place_chain_reversal round_01)"
+  run_ok "010-repair-runtime" "Dafny program verifier finished with 15 verified, 0 errors" \
+    "$dafny_bin" run --cores "$dafny_cores" --verify-included-files "$staged" -t:py
+  grep -Fq 'input values: [1, 2]' "$logs_dir/010-repair-runtime.log"
+  grep -Fq 'abstract returned sequences agree: [2, 1]' "$logs_dir/010-repair-runtime.log"
+  grep -Fq 'reference returns old tail: true' "$logs_dir/010-repair-runtime.log"
+  grep -Fq 'repaired returns old head: true' "$logs_dir/010-repair-runtime.log"
+  grep -Fq 'reference returned successor is old head: true' "$logs_dir/010-repair-runtime.log"
+  grep -Fq 'repaired returned successor is old tail: true' "$logs_dir/010-repair-runtime.log"
+  grep -Fq 'reference old-head value / old-tail value: 1 / 2' "$logs_dir/010-repair-runtime.log"
+  grep -Fq 'repaired old-head value / old-tail value: 2 / 1' "$logs_dir/010-repair-runtime.log"
+  grep -Fq 'reference old-head successor is null: true' "$logs_dir/010-repair-runtime.log"
+  grep -Fq 'repaired old-head successor is old tail: true' "$logs_dir/010-repair-runtime.log"
+}
+
 run_001() {
   local case_dir="$root/case_001_substring_occurrence"
   local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/AssertivePrograming_tmp_tmpwf43uz0e_Find_Substring.dfy"
@@ -211,6 +270,8 @@ run_002() {
   local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/DafnyPrograms_tmp_tmp74_f9k_c_automaton.dfy"
   run_ok "002-reference" "Dafny program verifier finished with 3 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
   run_expected_fail "002-generated" "Dafny program verifier finished with 3 verified, 2 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
+  run_ok "002-repair-round-01" "Dafny program verifier finished with 4 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/repair/round_01/output_program.dfy"
+  run_ok "002-repair-comparison" "Dafny program verifier finished with 12 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" --verify-included-files "$case_dir/repair/comparison_harness.dfy"
 }
 
 run_003() {
@@ -268,6 +329,11 @@ run_009() {
   run_ok "009-reference" "Dafny program verifier finished with 6 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
   run_expected_fail "009-generated" "Dafny program verifier finished with 5 verified, 1 error" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
   require_log_contains "009-generated" "generated_attempt_01.dfy(51,15): Error: assignment might update an array element not in the enclosing context's modifies clause"
+  run_expected_fail "009-repair-round-01" "Dafny program verifier finished with 5 verified, 1 error" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/repair/round_01/output_program.dfy"
+  require_log_contains "009-repair-round-01" "output_program.dfy(78,11): Error: assertion might not hold"
+  run_ok "009-repair-round-02" "Dafny program verifier finished with 6 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/repair/round_02/output_program.dfy"
+  run_ok "009-repair-comparison" "Dafny program verifier finished with 13 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" --verify-included-files "$case_dir/repair/comparison_harness.dfy"
+  run_repair_runtime_009
 }
 
 run_010() {
@@ -276,6 +342,9 @@ run_010() {
   run_ok "010-reference" "Dafny program verifier finished with 10 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
   run_expected_fail "010-generated" "17 resolution/type errors detected in generated_attempt_01.dfy" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
   require_log_count "010-generated" 17 "Error: type seq<T> does not have a member Length"
+  run_ok "010-repair-round-01" "Dafny program verifier finished with 8 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/repair/round_01/output_program.dfy"
+  run_ok "010-repair-comparison" "Dafny program verifier finished with 15 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" --verify-included-files "$case_dir/repair/comparison_harness.dfy"
+  run_repair_runtime_010
 }
 
 run_011() {
@@ -302,6 +371,8 @@ run_013() {
   run_expected_fail "013-generated" "Dafny program verifier finished with 6 verified, 2 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
   require_log_contains "013-generated" "generated_attempt_01.dfy(226,12): Error: assignment might update an array element not in the enclosing context's modifies clause"
   require_log_contains "013-generated" "generated_attempt_01.dfy(307,11): Error: assignment might update an array element not in the enclosing context's modifies clause"
+  run_ok "013-repair-round-01" "Dafny program verifier finished with 7 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/repair/round_01/output_program.dfy"
+  run_ok "013-repair-comparison" "Dafny program verifier finished with 50 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" --warn-deprecation false --verify-included-files "$case_dir/repair/comparison_harness.dfy"
 }
 
 run_014() {
@@ -332,11 +403,18 @@ echo "== provenance checksums"
 (cd "$root" && sha256sum -c provenance/SHA256SUMS)
 (cd "$root" && sha256sum -c provenance/extension_freeze_SHA256SUMS)
 (cd "$root" && sha256sum -c provenance/extension_results_SHA256SUMS)
+(cd "$root" && sha256sum -c provenance/repair_SHA256SUMS)
 
 echo "== heuristic forbidden-feature scan"
 forbidden='assume|\{:[[:space:]]*(verify[[:space:]]+false|axiom|extern)|decreases[[:space:]]+\*|(^|[^[:alnum:]_])print([[:space:](;]|$)'
-if grep -En "$forbidden" \
-  "$root"/case_???_*/generated_attempt_01.dfy; then
+forbidden_scan_files=(
+  "$root"/case_???_*/generated_attempt_01.dfy
+  "$root"/case_002_local_transition_trace/repair/round_*/output_program.dfy
+  "$root"/case_009_local_array_repair/repair/round_*/output_program.dfy
+  "$root"/case_010_in_place_chain_reversal/repair/round_*/output_program.dfy
+  "$root"/case_013_undo_log_recovery/repair/round_*/output_program.dfy
+)
+if grep -En "$forbidden" "${forbidden_scan_files[@]}"; then
   echo "error: forbidden construct found" >&2
   exit 1
 fi

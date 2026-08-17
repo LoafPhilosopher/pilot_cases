@@ -1,0 +1,8 @@
+Dafny version: 4.3.0
+
+Command:
+./.tools/dafny-4.3.0/dafny/dafny verify --cores 1 --warn-deprecation false --verify-included-files case_013_undo_log_recovery/repair/comparison_harness.dfy
+
+Exit code: 0
+
+Dafny program verifier finished with 50 verified, 0 errors

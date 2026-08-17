@@ -1,19 +1,22 @@
 # Case 013: restoring memory from an undo log
 
-The generated program reconstructs the intended reverse recovery loop, but it
-does not pass Dafny: two array writes lack the required frame proof, so no
-equivalence comparison with the reference program was performed.
+**Repair outcome: Repair Round 01 verifies and the repaired body is equivalent
+to the reference under the comparison used in this study.** Dafny proves equality of
+the final abstract states, complete log/record contents, complete memory/value
+contents, and countdown values. Both bodies also preserve their entry array
+objects and caller aliases, but that last fact is established by direct source
+inspection because neither public method contract includes array-identity
+postconditions.
 
-## Problem given to the model
+## Problem and specification
 
-This is DafnyBench ID327. The object has an integer array `records`, an integer
-array `values`, a remaining-step counter, and a ghost state. `records[0]`
-stores the number of active log entries. The following positions contain
-pairs of the form `(offset, oldValue)`. The predicates guarantee that each
-offset is in range and that the first logged value for an offset is its
-baseline value.
+The object stores an undo log, a mutable value array, a remaining-step counter,
+and a ghost state. Position zero of the log array is the number of active
+entries. The following positions contain pairs `(offset, oldValue)`. The
+preconditions guarantee that each offset is valid and that the earliest log
+entry for an offset contains its baseline value.
 
-The model received this method interface:
+The generated method has this contract:
 
 ```dafny
 method RestoreState()
@@ -28,78 +31,90 @@ method RestoreState()
   ensures Represents(model)
 ```
 
-`SpecifiedState` fixes every field of the final ghost state: the entry count
-becomes zero, `currentValues` becomes `baselineValues`, and the stored log,
-value count, intended values, counter, baseline, and first-entry map remain
-unchanged. `Represents` connects this state to the concrete arrays. The model
-was not given the reference traversal code.
+`SpecifiedState` sets the active entry count to zero and restores
+`currentValues` to `baselineValues`. It preserves the stored entries, value
+count, intended values, counter, baseline values, and first-entry map.
 
-Reverse order matters when one memory offset appears in several log entries.
-Later entries restore intermediate values first, while the earliest entry for
-that offset contains its baseline value. Replaying from the last active entry
-to the first therefore leaves every logged offset at the baseline. Offsets
-that never appeared in the log are already required to equal the baseline.
+Recovery must process entries in reverse order. If one offset occurs more than
+once, later entries first restore intermediate values; the earliest entry then
+restores the baseline value.
 
-## What the two programs do
+## Reference, first attempt, and repair
 
-The reference recovery method uses this executable structure:
+Both programs use the same executable algorithm:
 
 ```text
-read the number of active records
-visit records from the last active pair to the first
-for each pair (offset, oldValue), write values[offset] := oldValue
-set records[0] := 0
+read the active-entry count
+visit log pairs from the last active pair to the first
+write each saved old value back to its recorded offset
+set the active-entry count to zero
 update the ghost state to the recovered state
 ```
 
-Its loop invariants also state that the `records` and `values` fields still
-refer to the same array objects as at method entry.
+The first generation omitted the frame facts that its `records` and `values`
+fields still denoted the arrays present at method entry. Dafny consequently
+rejected the write to `values[offset]` and the final write to `records[0]`.
+Repair Round 01 saved both entry arrays in local variables and added identity
+invariants to the reverse loop. It did not replace the recovery algorithm.
 
-The generated program follows the same reverse order. It proves detailed
-facts about which offsets have already reached their baseline values, then
-writes `values[offset] := restored`. After the loop it writes
-`records[0] := 0` and assigns the specified ghost state. It does not, however,
-carry the array-identity facts needed for those writes.
+| Program | Dafny 4.3.0 result | Outcome |
+|---|---:|---|
+| First generation | 6 verified, 2 errors | Both array writes lacked frame proofs |
+| Repair Round 01 | 7 verified, 0 errors | Final verifier-passing repair |
 
-## Verification result
+Only Repair Round 01 is compared with the reference. The failed first program
+and its verifier log remain unchanged as the initial generation record.
 
-The complete DafnyBench reference file verifies with Dafny 4.3.0:
+## Equivalence comparison
 
-```text
-Reference program: 37 verified, 0 errors
-```
+The comparison pairs the reference ghost state with the generated ghost state
+field by field: entry count, stored entries, value count, current values,
+baseline values, intended values, remaining steps, and first-entry map.
 
-The first generated response was kept unchanged and produces:
+For arbitrary legal initial states, an induction over the reference
+`reverse_recovery` function shows that recovery changes only its abstract
+memory sequence before setting the entry count to zero. The proof then relates
+the reference recovered state to `SpecifiedState` in all eight fields. The
+harness calls each actual public method, takes immutable snapshots immediately
+after each call, and proves equality of:
 
-```text
-generated_attempt_01.dfy(226,12): Error:
-assignment might update an array element not in the enclosing context's modifies clause
+- the complete reference log and generated record arrays,
+- the complete reference memory and generated value arrays,
+- the reference countdown and generated remaining-step value, and
+- every field of the two ghost states under the declared name mapping.
 
-generated_attempt_01.dfy(307,11): Error:
-assignment might update an array element not in the enclosing context's modifies clause
+The reference file verifies with `37 verified, 0 errors`. Verifying the
+reference, Repair Round 01, and comparison harness together gives
+`50 verified, 0 errors`.
 
-Dafny program verifier finished with 6 verified, 2 errors
-```
+## What Dafny proves and what was checked by reading the code
 
-The rejected statements are `values[offset] := restored` inside the loop and
-`records[0] := 0` after it. Because `modifies this` allows object fields to be
-changed, Dafny needs proof that the field expressions `values` and `records`
-still denote the entry-state arrays authorized by the method's frame. The
-reference carries this information explicitly. The generated invariants
-describe array contents but do not preserve the necessary object identities.
+The full relation also requires each execution to retain its own original
+public array objects, so a caller-held alias continues to observe the restored
+contents. Cross-run pointer equality is not required.
 
-## What is and is not established
+This identity property cannot be derived from the two public contracts.
+`modifies this` permits a field assignment, and neither method has an
+`ensures records == old(records)`-style clause. The retained bodies nevertheless
+preserve identity:
 
-The response inferred a plausible recovery algorithm and many of its content
-invariants. That is not a successful Dafny solution: the two rejected writes
-mean the verifier has not established that the method respects its allowed
-heap updates. A verification failure is also not evidence that the executable
-outputs differ from the reference. It also cannot be treated as evidence of
-equality merely because its executable steps resemble the reference loop. The
-program was not repaired or rerun, and we did not compare its final arrays or
-ghost state with the reference.
+- the reference writes only `mem_[off]` and `log_[0]`; it never assigns a new
+  array to `mem_` or `log_`, and its loop carries `mem_ == old(mem_)` and
+  `log_ == old(log_)`;
+- Repair Round 01 writes only `values[offset]` and `records[0]`; it never
+  assigns the fields, and its verified loop invariants keep them equal to the
+  entry arrays saved in `originalValues` and `originalRecords`.
 
-## Reproduction
+Thus the two retained bodies satisfy the full relation. The content and ghost
+state correspondence is machine-checked; the connection from the bodies to
+entry array identity is the stated source-inspection step. Adding explicit
+array-identity postconditions to both interfaces would make that final step
+available to a modular Dafny proof.
+
+## Reproduce
+
+From the repository root, reproduce the first attempt, repair, and comparison
+with:
 
 ```bash
 ./reproduce.sh --case 013
