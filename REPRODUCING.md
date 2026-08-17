@@ -15,9 +15,10 @@ The script:
 2. verifies its SHA-256 digest;
 3. checks out DafnyBench at the exact recorded commit;
 4. checks the bytewise repair chains, reconstructs every repair prompt, replays
-   each Round 01 verifier feedback file, verifies all four artifact checksum
-   manifests, and then reruns the heuristic text scan for forbidden constructs
-   on both first attempts and saved repair outputs;
+   each Round 01 verifier feedback file and the verifier output passed into Case
+   009 Round 02, verifies all four artifact checksum manifests, and then reruns
+   the heuristic text scan for forbidden constructs on both first attempts and
+   saved repair outputs;
 5. reruns every reference, all 15 first attempts, and each first-attempt
    post-gate comparison;
 6. reproduces every saved repair round for cases 002, 009, 010, and 013,
@@ -53,8 +54,11 @@ The four Round 01 feedback files are independently recreated by running Dafny
 4.3.0 from the corresponding round directory on `input_program.dfy`, with the
 recorded two-worker setting. The script compares both the exit code and the
 complete combined verifier output byte for byte with `verifier_feedback.txt`.
-Round 02 of Case 009 is already closed by the chain check: its feedback is the
-complete saved Round 01 output verification.
+For Case 009 it also runs Round 01's `output_program.dfy` and compares the exit
+code and complete output byte for byte with `round_01/verification.txt`. The
+chain check then connects that independently reproduced result to
+`round_02/verifier_feedback.txt` and to the feedback block in the Round 02
+prompt.
 
 The script then verifies the already saved repair history; it does not call an
 agent or generate new repair code. Case 002 passes in round 1 (`4 verified, 0
@@ -123,7 +127,7 @@ DAFNYBENCH_DIR=/absolute/path/to/DafnyBench \
 The setup script verifies both supplied versions before running.
 Verification uses two solver workers by default to remain predictable on
 shared machines. Set `DAFNY_CORES` to another positive integer if needed.
-The exact Round 01 feedback replay always uses the recorded two-worker setting;
+The exact repair-record replays always use the recorded two-worker setting;
 `DAFNY_CORES` controls the other verification and runtime checks.
 
 ## Historical command records

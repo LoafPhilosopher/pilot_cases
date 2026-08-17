@@ -223,18 +223,20 @@ check_repair_prompts() {
     "$root/case_013_undo_log_recovery/repair/round_01"
 }
 
-replay_round_01_feedback() {
+replay_saved_verifier_output() {
   local label="$1"
   local expected_exit="$2"
   local round_dir="$3"
+  local program_name="$4"
+  local saved_transcript="$5"
   local work_dir="$runtime_dir/repair-provenance/$label"
   local body="$work_dir/dafny_output.txt"
-  local replayed="$work_dir/replayed_feedback.txt"
+  local replayed="$work_dir/replayed_transcript.txt"
   local actual_exit
 
   mkdir -p "$work_dir"
   if (cd "$round_dir" && \
-      "$dafny_bin" verify --cores 2 input_program.dfy) >"$body" 2>&1; then
+      "$dafny_bin" verify --cores 2 "$program_name") >"$body" 2>&1; then
     actual_exit=0
   else
     actual_exit=$?
@@ -248,19 +250,32 @@ replay_round_01_feedback() {
     printf 'Exit code: %s\n\n' "$actual_exit"
     sed -n '1,$p' "$body"
   } >"$replayed"
-  require_bytewise_equal "$label replayed verifier feedback" \
-    "$replayed" "$round_dir/verifier_feedback.txt"
+  require_bytewise_equal "$label replayed verifier output" \
+    "$replayed" "$saved_transcript"
 }
 
 check_round_01_feedback() {
-  replay_round_01_feedback "002-round-01" 4 \
-    "$root/case_002_local_transition_trace/repair/round_01"
-  replay_round_01_feedback "009-round-01" 4 \
-    "$root/case_009_local_array_repair/repair/round_01"
-  replay_round_01_feedback "010-round-01" 2 \
-    "$root/case_010_in_place_chain_reversal/repair/round_01"
-  replay_round_01_feedback "013-round-01" 4 \
-    "$root/case_013_undo_log_recovery/repair/round_01"
+  local round_dir
+
+  round_dir="$root/case_002_local_transition_trace/repair/round_01"
+  replay_saved_verifier_output "002-round-01-input" 4 "$round_dir" \
+    "input_program.dfy" "$round_dir/verifier_feedback.txt"
+  round_dir="$root/case_009_local_array_repair/repair/round_01"
+  replay_saved_verifier_output "009-round-01-input" 4 "$round_dir" \
+    "input_program.dfy" "$round_dir/verifier_feedback.txt"
+  round_dir="$root/case_010_in_place_chain_reversal/repair/round_01"
+  replay_saved_verifier_output "010-round-01-input" 2 "$round_dir" \
+    "input_program.dfy" "$round_dir/verifier_feedback.txt"
+  round_dir="$root/case_013_undo_log_recovery/repair/round_01"
+  replay_saved_verifier_output "013-round-01-input" 4 "$round_dir" \
+    "input_program.dfy" "$round_dir/verifier_feedback.txt"
+}
+
+check_case_009_round_02_feedback_source() {
+  local round_dir="$root/case_009_local_array_repair/repair/round_01"
+
+  replay_saved_verifier_output "009-round-01-output" 4 "$round_dir" \
+    "output_program.dfy" "$round_dir/verification.txt"
 }
 
 "$root/scripts/setup_dependencies.sh"
@@ -625,6 +640,9 @@ check_repair_prompts
 
 echo "== round 01 verifier feedback replay"
 check_round_01_feedback
+
+echo "== case 009 round 02 feedback source replay"
+check_case_009_round_02_feedback_source
 
 echo "== provenance checksums"
 (cd "$root" && sha256sum -c provenance/SHA256SUMS)
