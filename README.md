@@ -19,18 +19,21 @@ requiring the reader to open the Dafny source files.
 For each task, the original method body was withheld. The model saw a neutrally
 renamed method header, its preconditions and postconditions, and the definitions
 needed to verify a new body. It was instructed not to browse the Web, use tools,
-or inspect files. We saved its first answer unchanged and checked it with Dafny
-4.3.0. If that answer passed, we compared it with the original method using
-either a Dafny proof or a concrete counterexample. Where Dafny could not
+or inspect files. We preserved the code from its first answer and checked it
+with Dafny 4.3.0. If that answer passed, we compared it with the original method
+using either a Dafny proof or a concrete counterexample. Where Dafny could not
 connect two imperative bodies automatically, we also stated which facts came
-from reading those bodies.
+from reading those bodies. The repository publishes code artifacts rather than
+complete platform responses: each `generated_attempt_01.dfy` contains the
+returned code with one trailing LF added, while full platform logs and event
+records remain private. See [`provenance/README.md`](provenance/README.md).
 
 After recording the first-attempt study, we repaired only the four programs
 that had failed verification: Cases 002, 009, 010, and 013. A fresh agent saw
 the current program and its Dafny feedback. Each case had a maximum of three
-rounds and stopped at its first verifier-passing repair. Every input, response,
-and verifier log is saved; the original failures were not overwritten. Only
-the first passing repair was compared with the reference. See
+rounds and stopped at its first verifier-passing repair. Every input, returned
+code artifact, and verifier log is saved; the original failures were not
+overwritten. Only the first passing repair was compared with the reference. See
 [`REPAIR_PROTOCOL.md`](REPAIR_PROTOCOL.md).
 
 The first five tasks were an exploratory pilot. The next ten tasks were chosen

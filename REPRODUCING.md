@@ -29,8 +29,9 @@ The script:
 Cases 002, 009, 010, and 013 are recorded first-attempt failures.
 Reproduction succeeds only when those attempts reproduce the recorded
 diagnostics, rather than merely returning a nonzero exit code. Case 002 has
-`3 verified, 2 errors`. Case 009 has `5 verified, 1 error` and must report at
-`(51,15)` that the array element assignment may update outside the enclosing
+`3 verified, 2 errors`; its two `index out of range` diagnostics must occur at
+`(177,19)` and `(177,31)`. Case 009 has `5 verified, 1 error` and must report
+at `(51,15)` that the array element assignment may update outside the enclosing
 modifies clause. Case 010 must report exactly 17 occurrences of Dafny 4.3.0's
 diagnostic
 `Error: type seq<T> does not have a member Length`, together with its recorded

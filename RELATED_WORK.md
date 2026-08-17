@@ -10,14 +10,19 @@ DafnyBench was designed primarily as a proof-hint completion task, pairing each
 original `ground_truth` program with a `hints_removed` version. The executable
 program remains in place while `assert` statements and loop `invariant`
 annotations are removed. A model is asked to restore enough of those
-annotations for Dafny to verify the file. The paper describes 782
-standalone programs selected after deduplication and Dafny verification
+annotations for Dafny to verify the file. The paper describes 782 standalone
+`ground_truth` programs: 556 from a GitHub scrape, 62 from Clover, and 164 from
+Dafny-synthesis. The GitHub-derived subset was deduplicated and verified with
+Dafny 4.3.0
 ([DafnyBench, Sections 3.1–3.2](https://arxiv.org/pdf/2406.08467#page=3)).
 
 The public evaluator treats a task as successful when Dafny reports no errors,
 the original `requires` and `ensures` clauses are preserved, and two specified
-verification bypasses are absent. These checks can be seen directly in the
-[pinned evaluation code](https://github.com/sun-wendy/DafnyBench/blob/0cd28feed9cd0179b07fdb9d002f8c39063658e4/eval/utils.py#L125-L155).
+verification bypasses are absent. The
+[individual checks](https://github.com/sun-wendy/DafnyBench/blob/0cd28feed9cd0179b07fdb9d002f8c39063658e4/eval/utils.py#L125-L155)
+and the
+[code that combines them into the success decision](https://github.com/sun-wendy/DafnyBench/blob/0cd28feed9cd0179b07fdb9d002f8c39063658e4/eval/fill_hints.py#L34-L48)
+are both available at the revision used here.
 The reported experiments measure how often models meet this gate, including
 retries that receive verifier feedback, and relate success to program length
 and the amount of missing proof annotation
@@ -30,11 +35,11 @@ method body from its contract.
 
 No automatic verifier can establish that a contract captures an unstated
 human intention. Dafny verification establishes that the program satisfies the
-formal contract supplied to it. DafnyBench additionally checked that collected
-source programs already verified and contained postconditions and proof hints.
-Those filters establish useful internal consistency, but they do not show that
-each postcondition is complete or faithful to the original programmer's
-intent.
+formal contract supplied to it. For the GitHub-derived subset, DafnyBench
+retained files that verified and contained `ensures` clauses plus `assert` or
+`invariant` annotations. Those filters establish useful internal consistency,
+but they do not show that each postcondition is complete or faithful to the
+original programmer's intent.
 
 The DafnyBench paper states this limit explicitly: it does not evaluate the
 translation of natural-language intent into formal specifications

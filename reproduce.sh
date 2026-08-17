@@ -503,6 +503,8 @@ run_002() {
   local reference="$benchmark_dir/DafnyBench/dataset/ground_truth/DafnyPrograms_tmp_tmp74_f9k_c_automaton.dfy"
   run_ok "002-reference" "Dafny program verifier finished with 3 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$reference"
   run_expected_fail "002-generated" "Dafny program verifier finished with 3 verified, 2 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
+  require_log_contains "002-generated" "generated_attempt_01.dfy(177,19): Error: index out of range"
+  require_log_contains "002-generated" "generated_attempt_01.dfy(177,31): Error: index out of range"
   run_ok "002-repair-round-01" "Dafny program verifier finished with 4 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/repair/round_01/output_program.dfy"
   run_ok "002-repair-comparison" "Dafny program verifier finished with 12 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" --verify-included-files "$case_dir/repair/comparison_harness.dfy"
 }
