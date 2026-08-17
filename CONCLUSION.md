@@ -2,8 +2,11 @@
 
 After repairing only the four failed first attempts, **7 cases are equivalent
 to the reference under the comparison used here, 5 have a concrete behavioral
-counterexample, and 3 are equivalent only under an additional condition.** No
-case exhausted the three-round repair budget.
+counterexample, and 3 are equivalent only under an additional condition.**
+
+Cases 007, 011, and 015 use a machine-checked abstract relation plus a disclosed
+source-audited bridge; they are not single end-to-end automatic relational
+proofs. No case exhausted the three-round repair budget.
 
 | Classification | Count | Cases |
 |---|---:|---|

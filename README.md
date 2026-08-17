@@ -2,6 +2,9 @@
 
 **Start with the short result summary: [`CONCLUSION.md`](CONCLUSION.md).**
 
+For how this study differs from DafnyBench's original evaluation and the later
+Vericoding benchmark, see [`RELATED_WORK.md`](RELATED_WORK.md).
+
 This repository contains a preliminary study of 15 non-trivial programs from
 DafnyBench. It asks two questions: can a coding model implement a method from
 its Dafny specification, and, when the generated program verifies, does it do
@@ -104,7 +107,8 @@ comparisons. See [`REPRODUCING.md`](REPRODUCING.md) for dependencies and
 per-case commands.
 
 Detailed task-selection records, prompts, raw generated programs, verifier
-logs, and checksums remain in the repository. The concise scope statement is
-in [`STUDY_SCOPE.md`](STUDY_SCOPE.md); the ten-case selection and its complete
-result table are in [`SHORTLIST.md`](SHORTLIST.md) and
-[`EXTENSION_RESULTS.md`](EXTENSION_RESULTS.md).
+logs, and checksums remain in the repository. [`SHORTLIST.md`](SHORTLIST.md)
+is the frozen historical researcher-selected artifact; its historical use of
+“approved” does not indicate that Jocelyn approved the exact task IDs. Current
+claims are governed by [`STUDY_SCOPE.md`](STUDY_SCOPE.md), and the ten-case
+outcomes are in [`EXTENSION_RESULTS.md`](EXTENSION_RESULTS.md).

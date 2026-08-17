@@ -1,5 +1,10 @@
 # Study scope and interpretation
 
+> **Historical-record note:** `SHORTLIST.md` is a frozen historical
+> researcher-selected artifact. Its historical use of “approved” is not
+> evidence that Jocelyn approved the exact task IDs. Current claims are
+> governed by this scope statement.
+
 This repository studies whether Dafny programs generated from masked, frozen
 specifications that pass verification also agree with hidden reference
 implementations under explicitly stated observation relations.
@@ -14,12 +19,8 @@ The study follows advisor guidance to:
 
 The five-case set is an exploratory pilot. Cases 006–015 are a separately
 prospectively frozen exploratory extension selected by the researcher before
-generation. This repository does not claim advisor approval of each exact task
-ID or make a broad model-performance claim.
-
-`SHORTLIST.md` and `EXTENSION_PROTOCOL.md` are preserved historical
-pre-generation artifacts. Current scope and interpretation are stated in this
-file.
+generation. The frozen selection artifact and original protocol are retained
+for provenance.
 
 ## Research question
 
@@ -126,4 +127,6 @@ model performance or establish contamination-free code generation.
 For the compact final table, see [`CONCLUSION.md`](CONCLUSION.md). The frozen
 selection record and original procedure remain in [`SHORTLIST.md`](SHORTLIST.md)
 and [`EXTENSION_PROTOCOL.md`](EXTENSION_PROTOCOL.md); the follow-up repair rule
-is in [`REPAIR_PROTOCOL.md`](REPAIR_PROTOCOL.md).
+is in [`REPAIR_PROTOCOL.md`](REPAIR_PROTOCOL.md). The relation to DafnyBench and
+the later Vericoding benchmark is summarized in
+[`RELATED_WORK.md`](RELATED_WORK.md).
