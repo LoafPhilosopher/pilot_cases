@@ -1,0 +1,9 @@
+Exit code: 4
+
+input_program.dfy(51,15): Error: assignment might update an array element not in the enclosing context's modifies clause
+   |
+51 |       this.data[i] := 0;
+   |                ^
+
+
+Dafny program verifier finished with 5 verified, 1 error

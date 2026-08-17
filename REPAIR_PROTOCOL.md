@@ -48,6 +48,8 @@ Each `repair/round_NN/` directory contains:
 - `input_program.dfy`: the program supplied for repair;
 - `verifier_feedback.txt`: the Dafny output supplied with that program;
 - `repair_prompt.md`: the complete task-specific repair instruction;
+- `generation_record.txt`: model, reasoning effort, fresh-context identifier,
+  and any tool or inter-agent events before the response (or an explicit zero);
 - `raw_response.txt`: the model's response exactly as received;
 - `output_program.dfy`: the source submitted to Dafny, identical to the raw
   response when the model follows the code-only instruction; and

@@ -1,0 +1,29 @@
+Exit code: 4
+
+   |
+77 |           forall j | 1 <= j <= |trace[i]| - 2
+   |           ^^^^^^
+
+input_program.dfy(77,10): Warning: unusual indentation in body of forall (which ends at line 79, column 71); do you perhaps need parentheses?
+   |
+92 |           forall j | 1 <= j <= |trace[i]| - 2
+   |           ^^^^^^
+
+input_program.dfy(92,10): Warning: unusual indentation in body of forall (which ends at line 94, column 71); do you perhaps need parentheses?
+    |
+103 |       forall i | 0 <= i < |trace| - 1
+    |       ^^^^^^
+
+input_program.dfy(103,6): Warning: unusual indentation in body of forall (which ends at line 110, column 20); do you perhaps need parentheses?
+input_program.dfy(177,19): Error: index out of range
+    |
+177 |         transition(row[j - 1], row[j], row[j + 1]));
+    |                    ^^^^^^^^^^
+
+input_program.dfy(177,31): Error: index out of range
+    |
+177 |         transition(row[j - 1], row[j], row[j + 1]));
+    |                                ^^^^^^
+
+
+Dafny program verifier finished with 3 verified, 2 errors

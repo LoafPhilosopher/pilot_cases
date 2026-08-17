@@ -1,0 +1,14 @@
+Exit code: 4
+
+input_program.dfy(226,12): Error: assignment might update an array element not in the enclosing context's modifies clause
+    |
+226 |       values[offset] := restored;
+    |             ^
+
+input_program.dfy(307,11): Error: assignment might update an array element not in the enclosing context's modifies clause
+    |
+307 |     records[0] := 0;
+    |            ^
+
+
+Dafny program verifier finished with 6 verified, 2 errors
