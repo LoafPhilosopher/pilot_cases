@@ -1,0 +1,12 @@
+Repair case: 009
+Round: 01
+Model: gpt-5.6-sol
+Reasoning effort: ultra
+Fresh-context identifier: /root/repair_009_r01
+Forked conversation turns: none
+Tool calls before response: 0
+Web or network calls before response: 0
+Filesystem calls before response: 0
+Inter-agent calls before response: 0
+Protocol deviation: none
+Response format: complete plain-text Dafny source

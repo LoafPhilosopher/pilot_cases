@@ -1,0 +1,9 @@
+Exit code: 4
+
+output_program.dfy(78,11): Error: assertion might not hold
+   |
+78 |     assert target == this.data;
+   |            ^^^^^^^^^^^^^^^^^^^
+
+
+Dafny program verifier finished with 5 verified, 1 error
