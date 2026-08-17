@@ -1,5 +1,7 @@
 # Comparing generated Dafny programs with the originals on 15 tasks
 
+**Start with the short result summary: [`CONCLUSION.md`](CONCLUSION.md).**
+
 This repository contains a preliminary study of 15 non-trivial programs from
 DafnyBench. It asks two questions: can a coding model implement a method from
 its Dafny specification, and, when the generated program verifies, does it do
