@@ -38,6 +38,17 @@ Two choices are left unspecified: the contract does not require the first
 occurrence when several exist, and it imposes no condition on `index` when
 `ok` is false.
 
+### Synthesis task and supplied context
+
+The runtime inputs are `source` and `pattern`. The runtime outputs are `ok` and
+`index`. The agent was given the complete definitions of
+`ContainsAtLeastOnce` and `ResultCondition`, the `ComputeWitness` signature,
+and its postcondition, with the target body omitted. The ghost predicates are
+specification context, not additional runtime inputs. The recorded prompt
+contains no reference body, test cases, example outputs, or required policy for
+choosing an occurrence or a failure index ([`PROMPT.md`](PROMPT.md)). The
+counterexample below was constructed only during the later comparison.
+
 ## What the two programs do
 
 The original DafnyBench program searches using possible *end* positions:

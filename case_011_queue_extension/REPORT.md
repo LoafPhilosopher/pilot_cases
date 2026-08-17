@@ -28,6 +28,18 @@ method UpdateStructure(item: T)
 Thus it had to allocate and connect a new cell, update the ghost state needed
 by `Consistent`, and prove that the abstract queue gained exactly `item`.
 
+### Synthesis task and supplied context
+
+The runtime inputs are `item` and the pre-state of the implicit `Buffer`
+receiver, including its existing cells and executable links. The method returns
+no value. Its runtime effect is to extend that queue. The `Buffer` and `Cell`
+declarations and constructors were supplied as program context; their
+consistency predicates and ghost fields were supplied as specification
+context. None is an additional runtime input. The target `UpdateStructure`
+body was omitted. The recorded prompt contains no reference body, test case,
+example queue state, example output, or prescribed
+implementation strategy ([`PROMPT.md`](PROMPT.md)).
+
 ## What the two programs do
 
 The reference `Queue.Enqueue` performs the following steps:

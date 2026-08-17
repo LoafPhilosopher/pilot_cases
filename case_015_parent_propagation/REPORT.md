@@ -38,6 +38,19 @@ method PropagateUpdate(change: int,
 The complete input also states the parent-child links and consistency of every
 other node. The reference body was hidden.
 
+### Synthesis task and supplied context
+
+The runtime inputs are `change` and the pre-state of the implicit
+`AggregateNode` receiver and its linked heap. The method has no return value.
+Its runtime effect is to update `aggregate` fields. `active` and `universe` are
+ghost inputs used to state the frame and consistency obligations, so they are
+not compiled runtime arguments. The class fields were supplied as program
+context; `Consistent`, `ChainFinite`, and the `requires`/`ensures` clauses were
+supplied as specification context. The target `PropagateUpdate` body was
+omitted. The recorded prompt contains no reference body, test tree, example
+output, or prescribed iterative or recursive strategy
+([`PROMPT.md`](PROMPT.md)).
+
 ## What the two programs do
 
 The reference `Adjust` method is iterative:

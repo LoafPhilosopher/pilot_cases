@@ -31,6 +31,23 @@ method RepairAt(position: int) returns (next: int)
 These postconditions constrain the final heap property and `next`, but say
 nothing about which input values must remain in the array.
 
+### Synthesis task and supplied context
+
+The runtime input is the receiver's current `data` array together with the
+explicit argument `position`. The observable outputs are the returned `next`
+value and the post-state of `data`. The agent was given the class and field
+declaration, the constructor, `EarlierPosition`, the two ordering predicates,
+and the `RepairAt` signature and contract, with the target body omitted. These
+declarations are supplied context, not additional runtime inputs. The recorded
+prompt contains no reference body, test case, example output, or required
+local-swap algorithm ([`PROMPT.md`](PROMPT.md)).
+
+The synthesis task was to implement a mutating body that establishes the
+stated postconditions. Under this contract, it was not specifically required
+to recover the reference program's one-swap repair. Each later repair round
+received the preceding candidate and its Dafny feedback, but not the reference
+implementation.
+
 ## Reference, first attempt, and repair rounds
 
 The reference performs one local step. It compares `position` with its existing

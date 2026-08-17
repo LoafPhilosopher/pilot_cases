@@ -39,6 +39,22 @@ Recovery must process entries in reverse order. If one offset occurs more than
 once, later entries first restore intermediate values; the earliest entry then
 restores the baseline value.
 
+### Synthesis task and supplied context
+
+`RestoreState` has no explicit arguments or return value. Its runtime input is
+the pre-state of the implicit `MutableContainer` receiver, especially the
+`records` and `values` arrays and `remainingSteps`. Its output is the mutation
+of that receiver state. `model` and `SpecifiedState` are ghost declarations.
+`StateRecord`, the predicates, and those ghost declarations were supplied as
+specification context; none is an additional runtime input. The target body was
+omitted, and the recorded initial prompt contains no reference body, test case,
+example log, or expected recovery trace
+([`PROMPT.md`](PROMPT.md)).
+
+Repair Round 01 additionally received the failed program and its Dafny
+verifier feedback. Those are repair context, not runtime inputs, and the repair
+agent still did not receive the reference implementation.
+
 ## Reference, first attempt, and repair
 
 Both programs use the same executable algorithm:

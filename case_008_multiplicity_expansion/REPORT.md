@@ -27,6 +27,20 @@ method ExpandRepresentation(counts: map<int, nat>)
 Additional postconditions restate the same multiplicity and empty-map facts.
 None of them fixes the position of any key in the returned sequence.
 
+### Synthesis task and supplied context
+
+The only data argument is `counts`, and the runtime output is `values`. The
+enclosing `CountRepresentation` object has no fields. The agent was given the
+class declaration, the bodyless `AbstractView` function and
+`RepresentationAgreement` lemma, and the `ExpandRepresentation` signature and
+contract, with the target body omitted. The function and lemma are
+specification and proof context, not additional runtime inputs. The recorded
+prompt contains no reference body, test case, example output, or required key
+order ([`PROMPT.md`](PROMPT.md)).
+
+The synthesis task was to return a sequence with the required multiplicities,
+not to recover the reference program's enumeration order.
+
 ## Reference and generated algorithms
 
 The reference starts with an empty sequence and a set containing all map keys.

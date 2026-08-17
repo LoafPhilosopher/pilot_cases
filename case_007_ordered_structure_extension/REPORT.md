@@ -27,6 +27,20 @@ Thus the result must remain ordered and contain exactly the old values plus
 example, a root `1` with right child `2` and a root `2` with left child `1`
 are both ordered trees containing `{1, 2}`.
 
+### Synthesis task and supplied context
+
+The runtime inputs are `base` and `item`. The runtime output is `result`. The
+agent was given the `Structure` datatype and the definitions of `ValuesOf`,
+`ValuesIn`, `Structured`, `Layout`, and `StrictlyIncreasing`, together with the
+`ExtendStructure` signature and contract. Only the target body was omitted.
+The datatype and helper definitions are supplied context, not additional
+runtime inputs. The recorded prompt contains no reference body, test case,
+example output, or required tree shape ([`PROMPT.md`](PROMPT.md)). The original
+filename was separately visible in platform metadata, as disclosed below.
+
+The synthesis task was to return an ordered tree with the required value set,
+not to recover a prescribed insertion procedure or tree shape.
+
 ## Reference and generated algorithms
 
 The reference method performs ordinary recursive binary-search-tree

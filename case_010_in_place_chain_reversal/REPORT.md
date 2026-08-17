@@ -34,6 +34,22 @@ These postconditions describe the values observable from the returned head.
 They do not say which old node must be returned or which old node must follow
 which. They also do not say that a value must remain attached to the same node.
 
+### Synthesis task and supplied context
+
+`Rewire` has no explicit value argument. Its runtime input is the receiver's
+concrete `value` and `successor` chain. The ghost fields `View` and `Owned`
+provide verification context rather than additional runtime inputs. The method
+returns `result` and may mutate nodes in `Owned`. The agent was given the class
+and field declarations, `Consistent`, the constructor, and the `Rewire`
+signature and contract, with the target body omitted. The recorded prompt
+contains no reference body, test case, example output, required returned-node
+identity, or required successor arrangement ([`PROMPT.md`](PROMPT.md)).
+
+The synthesis task was to return a chain with the required reversed abstract
+`View`, not to recover the reference program's concrete pointer-reversal
+algorithm. Repair Round 01 additionally received the failed program and its
+Dafny feedback, but not the reference implementation.
+
 ## First attempt and repair
 
 The first response proposed this strategy:

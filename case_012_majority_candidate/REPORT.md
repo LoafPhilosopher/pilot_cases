@@ -33,6 +33,17 @@ cover both settings when asking whether the complete methods always return the
 same value. A strict majority, when it exists, is unique because two different
 values cannot each occur more than half of the time.
 
+### Synthesis task and supplied context
+
+The only runtime argument is `values`, and the runtime output is `candidate`.
+`promised` and `designated` are ghost inputs: they constrain verification but
+are erased from the executable call. `SegmentFrequency` and the two lemmas were
+supplied as helper and specification context, not as additional runtime inputs.
+The target `SelectCandidate` body was omitted. The recorded prompt contains no
+reference body, test case, example sequence, example output, or required
+candidate ([`PROMPT.md`](PROMPT.md)). The original filename was separately
+visible in platform metadata, as disclosed next.
+
 The model did not receive the reference body. However, historical metadata in
 the platform context exposed the filename `MajorityVote.dfy`. It exposed no
 source code, and the model made no Web, filesystem, or tool calls. The result

@@ -29,6 +29,22 @@ Here `.1` is the frequency component of a map entry. The contract says which
 keys are acceptable, but it does not specify how to choose between keys with
 the same minimum frequency.
 
+### Synthesis task and supplied context
+
+The runtime input is the receiver object, whose state includes `capacity` and
+`table`. `ChooseEntry` has no explicit argument. Its only output is `selected`.
+The agent was given the class and field declarations, the definition of
+`Coherent`, and the `ChooseEntry` signature and contract, with the target body
+omitted. These declarations are supplied context, not additional runtime
+inputs. The recorded prompt contains no reference body, test case, example
+output, or prescribed minimum-frequency key ([`PROMPT.md`](PROMPT.md)). The
+original filename was separately visible in platform metadata, as disclosed
+below.
+
+The synthesis task was to implement any body that returns a minimum-frequency
+key allowed by the contract, not to recover the reference program's
+tie-breaking choice.
+
 ## Reference and generated algorithms
 
 The reference method chooses an arbitrary first entry, records its key and

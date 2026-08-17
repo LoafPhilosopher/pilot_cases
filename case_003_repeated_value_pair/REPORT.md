@@ -24,6 +24,20 @@ Here `HasWitness(values, v)` means that there are indices `i < j` with
 distinct repeated values. It contains no rule for choosing between three or
 more possibilities and no rule for ordering the returned pair.
 
+### Synthesis task and supplied context
+
+The only runtime input is `values`. The runtime outputs are `x` and `y`. The
+agent was given the complete definitions of `HasWitnessBefore` and
+`HasWitness`, together with the `ChooseWitnesses` signature and its
+`requires`/`ensures` clauses, while the target method body was omitted. These
+declarations are specification context, not additional runtime inputs. The
+recorded prompt contains no reference body, test cases, example outputs, or
+required witness pair ([`PROMPT.md`](PROMPT.md)).
+
+Thus, the synthesis task is existential witness finding: implement and verify
+a body that returns any two distinct repeated values. It is not a task of
+recovering the reference program's particular selection or ordering policy.
+
 ## What the reference and generated programs do
 
 The reference program makes one left-to-right pass. It uses an auxiliary array

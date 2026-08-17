@@ -33,6 +33,20 @@ next row is `transition(false, old[0], old[1])`; the final cell is
 complete output, including its order. There is no tie or unconstrained return
 value in this case.
 
+### Synthesis task and supplied context
+
+The runtime inputs are `seed`, the function value `transition`, and `rounds`.
+The runtime output is `trace`. For the initial generation, the agent received
+the enclosing `TraceBuilder` declaration and the complete `BuildTrace`
+signature and contract, with the target body omitted. There were no additional
+helper declarations, hidden runtime inputs, reference body, test cases, or
+example traces ([`PROMPT.md`](PROMPT.md)). The synthesis task was to implement
+and verify a body satisfying the stated transition recurrence.
+
+The later repair agent additionally received the failed generated program and
+its Dafny verifier feedback. It still did not receive the reference
+implementation.
+
 ## First attempt and repair
 
 The reference builds the result iteratively. It starts with `[seed]`, computes

@@ -29,6 +29,22 @@ must navigate the concrete tree, translate indices when it moves to the right
 child, combine two recursive results when an interval crosses the pivot, and
 prove that every slice and recursive call is valid.
 
+### Synthesis task and supplied context
+
+The runtime inputs are the implicit receiver `this` and the explicit
+parameters `start` and `stop`. The runtime output is `out`. The receiver's
+executable tree state is represented by `chunk`, `pivot`, `first`, and
+`second`. `Model`, `Footprint`, and `WellFormed` are ghost specification
+context used for verification, not additional executable inputs.
+
+The agent was given the module and class declarations, all field declarations,
+the complete `WellFormed` definition, and the `ExtractWindow` signature,
+contract, and decreases clause, with the target body omitted. The recorded
+prompt contains no reference class or method body, concrete input tree, test
+case, or example output ([`PROMPT.md`](PROMPT.md)). The synthesis task was to
+navigate the concrete tree and verify that the returned string equals the
+specified abstract slice.
+
 ## What the reference and generated programs do
 
 The reference program first handles an empty interval. For a nonempty

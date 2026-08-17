@@ -35,6 +35,16 @@ because the specification asks only for one maximizing witness and gives no
 tie-breaking rule. Separating these two returns is necessary when deciding
 what the comparison proves.
 
+### Synthesis task and supplied context
+
+The only runtime input is `text`, and the only compiled output is `size`.
+`chosen` is a ghost proof witness. `Span`, `SpanSize`, and `IsAdmissible` were
+supplied as specification context, not as additional runtime inputs. The target
+`SelectDistinctWindow` body was omitted. The recorded prompt contains no
+reference body, test case, example string, example output, or required
+maximizing interval ([`PROMPT.md`](PROMPT.md)). The examples below were created
+for the later analysis and were not shown to the agent.
+
 ## What the two programs do
 
 The reference program uses a sliding window:

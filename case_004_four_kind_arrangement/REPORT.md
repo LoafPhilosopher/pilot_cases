@@ -34,6 +34,20 @@ above. Consequently `ValidArrangement` requires every earlier element of the
 result to be less than or equal to every later element. The multiset clause
 preserves the number of occurrences of each constructor.
 
+### Synthesis task and supplied context
+
+The only runtime input is `items`. The runtime output is `result`. The agent
+was given the `Kind` datatype, the complete definitions of `AllowedPair` and
+`ValidArrangement`, and the `Transform` signature and contract, with the target
+body omitted. These declarations define the input type and specification. They
+are not additional method inputs. The recorded prompt contains no reference
+datatype or body, constructor-name correspondence, test cases, example
+outputs, or required sorting algorithm ([`PROMPT.md`](PROMPT.md)).
+
+The synthesis task was to implement and verify any transformation that returns
+the specified ordered permutation, not to reconstruct the reference
+partitioning algorithm.
+
 ## What the reference and generated programs do
 
 The reference program uses four moving regions, in the style of the Dutch
