@@ -15,8 +15,9 @@ The script:
 2. verifies its SHA-256 digest;
 3. checks out DafnyBench at the exact recorded commit;
 4. verifies the pilot, extension-freeze, extension-result, and repair artifact
-   checksums and reruns the heuristic text scan for forbidden constructs on
-   both first attempts and saved repair outputs;
+   checksums, checks the bytewise repair chains, and then reruns the heuristic
+   text scan for forbidden constructs on both first attempts and saved repair
+   outputs;
 5. reruns every reference, all 15 first attempts, and each first-attempt
    post-gate comparison;
 6. reproduces every saved repair round for cases 002, 009, 010, and 013,
@@ -36,6 +37,12 @@ diagnostic
 modifies-clause diagnostics must occur at `(226,12)` and `(307,11)`. Thus an
 unrelated failure with the same error count is rejected.
 
+The bytewise chain checks confirm that each Round 01 input is the corresponding
+first attempt and that each saved raw response is exactly the program sent to
+Dafny. For Case 009, they also confirm that the Round 01 output became the Round
+02 input and that the Round 01 verification log became the Round 02 verifier
+feedback.
+
 The script then verifies the already saved repair history; it does not call an
 agent or generate new repair code. Case 002 passes in round 1 (`4 verified, 0
 errors`). Case 009 still fails in round 1 at its saved assertion (`5 verified,
@@ -43,7 +50,7 @@ errors`). Case 009 still fails in round 1 at its saved assertion (`5 verified,
 in round 1 with `8 verified, 0 errors` and `7 verified, 0 errors`, respectively.
 Only those final passing programs are used by the repair comparison harnesses.
 Their recorded verification summaries are 12/0 for case 002, 13/0 for case
-009, 15/0 for case 010, and 50/0 for case 013. Executing the case 009 and 010
+009, 19/0 for case 010, and 50/0 for case 013. Executing the case 009 and 010
 harnesses also checks their concrete behavioral differences from the pinned
 reference implementations.
 
@@ -62,7 +69,7 @@ artifact; it does not turn that attempt into a protocol-conforming sample.
 - DafnyBench commit:
   `0cd28feed9cd0179b07fdb9d002f8c39063658e4`
 
-Automatic setup requires `bash`, `curl`, `git`, `unzip`, and `sha256sum`.
+Automatic setup requires `bash`, `cmp`, `curl`, `git`, `unzip`, and `sha256sum`.
 Python 3 is required for the five runtime counterexamples. Downloaded
 dependencies are stored in ignored directories `.tools/` and
 `third_party/`; each reproduction run receives a new timestamped directory

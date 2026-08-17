@@ -65,9 +65,11 @@ The comparison harness constructs corresponding two-node inputs:
 old head(value = 1) -> old tail(value = 2) -> null
 ```
 
-It calls the pinned reference body and the saved Round 01 body. Both returned
-ghost sequences are `[2, 1]`; Dafny proves those assertions from the two method
-contracts. Their concrete states nevertheless differ:
+It directly includes the pinned DafnyBench `ListContents.dfy` file and the saved
+Round 01 file. The harness calls the original `Node<int>.ReverseInPlace` and the
+repair's `Link<int>.Rewire`. Both returned ghost sequences are `[2, 1]`; Dafny
+proves those assertions from the two method contracts. Their concrete states
+nevertheless differ:
 
 | Observation after the call | Reference | Round 01 repair |
 |---|---|---|
@@ -78,13 +80,13 @@ contracts. Their concrete states nevertheless differ:
 | Old head's successor | `null` | old tail |
 | Old tail's successor | old head | `null` |
 
-The harness and its included repair verify together with
-`15 verified, 0 errors`. Running it with Dafny's
+The original DafnyBench file, the saved repair, and the harness verify together
+with `19 verified, 0 errors`. Running the harness with Dafny's
 Python target prints `true` for the returned-node and successor observations
 shown in the table, as well as the two different pairs of values stored in the
-old nodes. The harness executes the saved repair and a faithful,
-identifier-renamed translation of the pinned reference body; it does not merely
-invent two states from the postconditions. The repair is included directly from
+old nodes. Both saved implementations are executed directly; no translated
+reference class is used. The reference is included from the pinned DafnyBench
+checkout, and the repair is included from
 `repair/round_01/output_program.dfy`.
 
 One concrete input is sufficient to reject equivalence under the fixed

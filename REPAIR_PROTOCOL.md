@@ -6,7 +6,9 @@ Repair is applied only to Cases 002, 009, 010, and 013. Their original
 `generated_attempt_01.dfy` files and historical logs remain unchanged. The
 eleven first attempts that already passed Dafny are not repaired.
 
-Each failed case has a budget of at most three repair rounds. A round consists
+Each failed case has a budget of at most three repair rounds. The researcher
+selected this limit and froze it before repair. Jocelyn agreed that the repair
+budget should be fixed but did not select this specific number. A round consists
 of one model response followed by one Dafny 4.3.0 verification. Repair stops at
 the first verifier-passing response, so a case cannot receive extra rounds
 after it passes.

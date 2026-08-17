@@ -46,6 +46,77 @@ case "$selected" in
     ;;
 esac
 
+command -v cmp >/dev/null 2>&1 || {
+  echo "error: cmp is required for repair provenance checks" >&2
+  exit 1
+}
+
+require_bytewise_equal() {
+  local label="$1"
+  local left="$2"
+  local right="$3"
+
+  if [[ ! -f "$left" ]]; then
+    echo "error: missing left file for $label: $left" >&2
+    exit 1
+  fi
+  if [[ ! -f "$right" ]]; then
+    echo "error: missing right file for $label: $right" >&2
+    exit 1
+  fi
+  if ! cmp -s -- "$left" "$right"; then
+    echo "error: repair provenance mismatch for $label" >&2
+    echo "  left:  $left" >&2
+    echo "  right: $right" >&2
+    exit 1
+  fi
+  echo "ok: $label"
+}
+
+check_repair_chains() {
+  local case_002="$root/case_002_local_transition_trace"
+  local case_009="$root/case_009_local_array_repair"
+  local case_010="$root/case_010_in_place_chain_reversal"
+  local case_013="$root/case_013_undo_log_recovery"
+
+  require_bytewise_equal "002 first attempt -> round 01 input" \
+    "$case_002/generated_attempt_01.dfy" \
+    "$case_002/repair/round_01/input_program.dfy"
+  require_bytewise_equal "002 round 01 raw response -> output" \
+    "$case_002/repair/round_01/raw_response.txt" \
+    "$case_002/repair/round_01/output_program.dfy"
+
+  require_bytewise_equal "009 first attempt -> round 01 input" \
+    "$case_009/generated_attempt_01.dfy" \
+    "$case_009/repair/round_01/input_program.dfy"
+  require_bytewise_equal "009 round 01 raw response -> output" \
+    "$case_009/repair/round_01/raw_response.txt" \
+    "$case_009/repair/round_01/output_program.dfy"
+  require_bytewise_equal "009 round 01 output -> round 02 input" \
+    "$case_009/repair/round_01/output_program.dfy" \
+    "$case_009/repair/round_02/input_program.dfy"
+  require_bytewise_equal "009 round 01 verification -> round 02 feedback" \
+    "$case_009/repair/round_01/verification.txt" \
+    "$case_009/repair/round_02/verifier_feedback.txt"
+  require_bytewise_equal "009 round 02 raw response -> output" \
+    "$case_009/repair/round_02/raw_response.txt" \
+    "$case_009/repair/round_02/output_program.dfy"
+
+  require_bytewise_equal "010 first attempt -> round 01 input" \
+    "$case_010/generated_attempt_01.dfy" \
+    "$case_010/repair/round_01/input_program.dfy"
+  require_bytewise_equal "010 round 01 raw response -> output" \
+    "$case_010/repair/round_01/raw_response.txt" \
+    "$case_010/repair/round_01/output_program.dfy"
+
+  require_bytewise_equal "013 first attempt -> round 01 input" \
+    "$case_013/generated_attempt_01.dfy" \
+    "$case_013/repair/round_01/input_program.dfy"
+  require_bytewise_equal "013 round 01 raw response -> output" \
+    "$case_013/repair/round_01/raw_response.txt" \
+    "$case_013/repair/round_01/output_program.dfy"
+}
+
 "$root/scripts/setup_dependencies.sh"
 
 dafny_bin="${DAFNY_BIN:-$root/.tools/dafny-4.3.0/dafny/dafny}"
@@ -240,19 +311,20 @@ run_repair_runtime_010() {
   if [[ $skip_runtime -eq 1 ]]; then
     return 0
   fi
+  local reference_rel="DafnyBench/dataset/ground_truth/Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_from dafny main repo_dafny1_ListContents.dfy"
   local staged
-  staged="$(stage_repair_runtime_case 010 case_010_in_place_chain_reversal round_01)"
-  run_ok "010-repair-runtime" "Dafny program verifier finished with 15 verified, 0 errors" \
+  staged="$(stage_repair_runtime_case 010 case_010_in_place_chain_reversal round_01 "$reference_rel")"
+  run_ok "010-repair-runtime" "Dafny program verifier finished with 19 verified, 0 errors" \
     "$dafny_bin" run --cores "$dafny_cores" --verify-included-files "$staged" -t:py
   grep -Fq 'input values: [1, 2]' "$logs_dir/010-repair-runtime.log"
   grep -Fq 'abstract returned sequences agree: [2, 1]' "$logs_dir/010-repair-runtime.log"
   grep -Fq 'reference returns old tail: true' "$logs_dir/010-repair-runtime.log"
   grep -Fq 'repaired returns old head: true' "$logs_dir/010-repair-runtime.log"
-  grep -Fq 'reference returned successor is old head: true' "$logs_dir/010-repair-runtime.log"
+  grep -Fq 'reference returned next is old head: true' "$logs_dir/010-repair-runtime.log"
   grep -Fq 'repaired returned successor is old tail: true' "$logs_dir/010-repair-runtime.log"
-  grep -Fq 'reference old-head value / old-tail value: 1 / 2' "$logs_dir/010-repair-runtime.log"
+  grep -Fq 'reference old-head data / old-tail data: 1 / 2' "$logs_dir/010-repair-runtime.log"
   grep -Fq 'repaired old-head value / old-tail value: 2 / 1' "$logs_dir/010-repair-runtime.log"
-  grep -Fq 'reference old-head successor is null: true' "$logs_dir/010-repair-runtime.log"
+  grep -Fq 'reference old-head next is null: true' "$logs_dir/010-repair-runtime.log"
   grep -Fq 'repaired old-head successor is old tail: true' "$logs_dir/010-repair-runtime.log"
 }
 
@@ -343,7 +415,7 @@ run_010() {
   run_expected_fail "010-generated" "17 resolution/type errors detected in generated_attempt_01.dfy" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/generated_attempt_01.dfy"
   require_log_count "010-generated" 17 "Error: type seq<T> does not have a member Length"
   run_ok "010-repair-round-01" "Dafny program verifier finished with 8 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" "$case_dir/repair/round_01/output_program.dfy"
-  run_ok "010-repair-comparison" "Dafny program verifier finished with 15 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" --verify-included-files "$case_dir/repair/comparison_harness.dfy"
+  run_ok "010-repair-comparison" "Dafny program verifier finished with 19 verified, 0 errors" "$dafny_bin" verify --cores "$dafny_cores" --verify-included-files "$case_dir/repair/comparison_harness.dfy"
   run_repair_runtime_010
 }
 
@@ -404,6 +476,9 @@ echo "== provenance checksums"
 (cd "$root" && sha256sum -c provenance/extension_freeze_SHA256SUMS)
 (cd "$root" && sha256sum -c provenance/extension_results_SHA256SUMS)
 (cd "$root" && sha256sum -c provenance/repair_SHA256SUMS)
+
+echo "== repair provenance chains"
+check_repair_chains
 
 echo "== heuristic forbidden-feature scan"
 forbidden='assume|\{:[[:space:]]*(verify[[:space:]]+false|axiom|extern)|decreases[[:space:]]+\*|(^|[^[:alnum:]_])print([[:space:](;]|$)'
